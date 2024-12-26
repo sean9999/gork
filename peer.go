@@ -7,13 +7,12 @@ import (
 
 	"github.com/eloonstra/go-little-drunken-bishop/pkg/drunkenbishop"
 	"github.com/sean9999/go-delphi"
-	stablemap "github.com/sean9999/go-stable-map"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Peer struct {
 	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub" json:"pub"`
-	Properties *stablemap.StableMap[string, string] `msgpack:"props" json:"props" yaml:"yaml" json:"props"`
+	Properties *KV `msgpack:"props" json:"props" yaml:"yaml" json:"props"`
 }
 
 func (p Peer) MarshalBinary() ([]byte, error) {
@@ -42,11 +41,11 @@ func (p Peer) Art() string {
 	return drunkenbishop.GenerateRandomArt(34, 18, p.Bytes(), true, title)
 }
 
+// MarshalPEM marshals a PEM to a Peer.
 func (p Peer) MarshalPEM() ([]byte, error) {
 
 	headers := p.Properties.AsMap()
 	headers["grip"] = p.Grip()
-
 	block := &pem.Block{
 		Type:    "GORACLE PUBLIC KEY",
 		Headers: headers,

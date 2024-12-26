@@ -12,18 +12,21 @@ import (
 	stablemap "github.com/sean9999/go-stable-map"
 )
 
+// KV is a key-value store whose keys are ordered
 type KV = stablemap.StableMap[string, string]
 
 func NewKV() *KV {
 	return stablemap.New[string, string]()
 }
 
+// a Principal is a public/private key-pair with some properties, and knowlege of [Peer]s
 type Principal struct {
-	delphi.Principal
-	Properties *KV
-	Peers      []Peer
+	delphi.Principal `msgpack:"priv" json:"priv" yaml:"priv"`
+	Properties       *KV    `msgpack:"props" json:"props" yaml:"props"`
+	Peers            []Peer `msgpack:"peers" json:"peers" yaml:"peers"`
 }
 
+// Compose creates a message for a recipient
 func (g Principal) Compose(body []byte, headers *KV, recipient Peer) delphi.Message {
 	msg := delphi.Message{
 		Recipient: recipient.Key,
@@ -33,6 +36,8 @@ func (g Principal) Compose(body []byte, headers *KV, recipient Peer) delphi.Mess
 	return msg
 }
 
+// Art returns the ASCII art representing a public key.
+// It can be used for easy visual identification.
 func (g Principal) Art() string {
 	return g.AsPeer().Art()
 }
@@ -45,6 +50,7 @@ func (g Principal) Art() string {
 // 	return g.Principal.Decrypt(msg *delphi.Message, opts crypto.DecrypterOpts)
 // }
 
+// NewPrincipal creates a new [Principal].
 func NewPrincipal(randy io.Reader, m map[string]string) Principal {
 	prince := delphi.NewPrincipal(randy)
 	peers := make([]Peer, 0, 8)
@@ -53,12 +59,14 @@ func NewPrincipal(randy io.Reader, m map[string]string) Principal {
 	return Principal{*prince, sm, peers}
 }
 
+// HasPeer returns true of the Principal has knowlege of that Peer
 func (g *Principal) HasPeer(p Peer) bool {
 	return slices.Contains(g.Peers, p)
 }
 
 var ErrPeerExists = errors.New("peer already exists")
 
+// DropPeer makes a Principal forget a Peer.
 func (g *Principal) DropPeer(p Peer) {
 	p2 := make([]Peer, 0, len(g.Peers))
 	for _, thisPeer := range g.Peers {
@@ -69,6 +77,7 @@ func (g *Principal) DropPeer(p Peer) {
 	g.Peers = p2
 }
 
+// AddPeer adds a Peer to a Principal's address book.
 func (g *Principal) AddPeer(p Peer) error {
 	if g.HasPeer(p) {
 		return ErrPeerExists
@@ -77,15 +86,17 @@ func (g *Principal) AddPeer(p Peer) error {
 	return nil
 }
 
+// AsPeer converts a Principal (public and private key) to a Peer (just public key)
 func (g *Principal) AsPeer() Peer {
 	k := g.PublicKey()
 	return Peer{k, g.Properties}
 }
 
+// MarshalPEM marshals a Principal to PEM format
 func (g *Principal) MarshalPEM() ([]byte, error) {
 	headers := g.Properties.AsMap()
 	headers["grip"] = g.AsPeer().Grip()
-	headers["pubkey"] = base64.StdEncoding.EncodeToString(g.PrivateKey().Bytes())
+	headers["pubkey"] = base64.StdEncoding.EncodeToString(g.AsPeer().Bytes())
 	block := &pem.Block{
 		Type:    "ORACLE PRIVATE KEY",
 		Headers: headers,
@@ -94,10 +105,10 @@ func (g *Principal) MarshalPEM() ([]byte, error) {
 	return pem.EncodeToMemory(block), nil
 }
 
-var ErrNoPubkey = errors.New("no pub key")
 var ErrBadPem = errors.New("malformed pem")
 var ErrBadHex = errors.New("bad hex")
 
+// UnmarshalPEM converts a PEM to a Principal
 func (g *Principal) UnmarshalPEM(b []byte) error {
 	block, _ := pem.Decode(b)
 	if block == nil {

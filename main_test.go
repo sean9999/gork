@@ -73,7 +73,7 @@ func TestNewGork(t *testing.T) {
 		}
 		b := pem.EncodeToMemory(&emptyPem)
 		err = yuk.UnmarshalPEM(b)
-		assert.ErrorIs(t, err, ErrNoPubkey)
+		assert.ErrorIs(t, err, ErrNoPubKey)
 		emptyPem.Headers["pubkey"] = "some invalid hex"
 		b = pem.EncodeToMemory(&emptyPem)
 		err = yuk.UnmarshalPEM(b)
