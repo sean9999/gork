@@ -12,8 +12,8 @@ import (
 )
 
 type Peer struct {
-	delphi.Key `msgpack:"pub" json:"pub"`
-	Properties *stablemap.StableMap[string, string] `msgpack:"props" json:"props"`
+	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub" json:"pub"`
+	Properties *stablemap.StableMap[string, string] `msgpack:"props" json:"props" yaml:"yaml" json:"props"`
 }
 
 func (p Peer) MarshalBinary() ([]byte, error) {
@@ -40,8 +40,6 @@ func (p Peer) Grip() string {
 func (p Peer) Art() string {
 	title := fmt.Sprintf("ORACLE PEER %s", p.Grip())
 	return drunkenbishop.GenerateRandomArt(34, 18, p.Bytes(), true, title)
-	//return randomart.RandomArt(p.Bytes(), p.Grip())
-	//return drunkenbishop.GenerateHeatmap(36, 14, p.Bytes())
 }
 
 func (p Peer) MarshalPEM() ([]byte, error) {

@@ -1,7 +1,7 @@
 package gork
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -85,7 +85,7 @@ func (g *Principal) AsPeer() Peer {
 func (g *Principal) MarshalPEM() ([]byte, error) {
 	headers := g.Properties.AsMap()
 	headers["grip"] = g.AsPeer().Grip()
-	headers["pubkey"] = fmt.Sprintf("%x", g.PublicKey().Bytes())
+	headers["pubkey"] = base64.StdEncoding.EncodeToString(g.PrivateKey().Bytes())
 	block := &pem.Block{
 		Type:    "ORACLE PRIVATE KEY",
 		Headers: headers,
@@ -104,11 +104,11 @@ func (g *Principal) UnmarshalPEM(b []byte) error {
 		return ErrBadPem
 	}
 	privkey := block.Bytes
-	hexPub, exists := block.Headers["pubkey"]
+	pub64, exists := block.Headers["pubkey"]
 	if !exists {
-		return ErrNoPubkey
+		return ErrNoPubKey
 	}
-	pub, err := hex.DecodeString(hexPub)
+	pub, err := base64.StdEncoding.DecodeString(pub64)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrBadHex, err)
 	}
@@ -117,5 +117,6 @@ func (g *Principal) UnmarshalPEM(b []byte) error {
 	kp[1] = delphi.Key{}.From(privkey)
 	g.Principal = kp
 	g.Properties = stablemap.From(block.Headers)
+	g.Properties.Delete("grip")
 	return nil
 }
