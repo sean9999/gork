@@ -1,0 +1,27 @@
+{
+	"pub": "5c2f587f8fa3f324412f1e033e2ecd8eb32d8e3f7703c38f5533eb11f7d9ad38583e7047ea1533d1b503e6fc40f4ea7bb7c5e5501fe442c311e60478776e464f",
+	"props": [
+		{
+			"pubkey": "XC9Yf4+j8yRBLx4DPi7NjrMtjj93A8OPVTPrEffZrThYPnBH6hUz0bUD5vxA9Op7t8XlUB/kQsMR5gR4d25GTw=="
+		},
+		{
+			"io.gork/version": "v0.0.1"
+		},
+		{
+			"grip": "969023d4"
+		},
+		{
+			"hometown": "wonderland"
+		},
+		{
+			"name": "Alice"
+		},
+		{
+			"narf": "fiddle"
+		}
+	],
+	"ver": {
+		"nonce": "a1295c1946c1427e99c06cbb00764b58",
+		"sig": "2ac4c6ade7c1e1db2dd03f21a370cbcf29a3fb75ed4101788baa86ca4598132111672e69bc19104b1be2c7c0da2c2b809122b795f04c52cf1a95752891eb020b"
+	}
+}

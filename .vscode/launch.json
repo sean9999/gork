@@ -10,7 +10,15 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/goracle",
-            "args": ["info", "config", "cowboy"]
+            "args": ["info", "--priv", "${workspaceFolder}/testdata/paul.pem"]
+        },
+        {
+            "name": "save",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/goracle",
+            "args": ["save", "--priv", "${workspaceFolder}/testdata/george_x.pem", "--config", "${workspaceFolder}/testdata/george.config.json"]
         }
     ]
 }

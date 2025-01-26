@@ -6,14 +6,54 @@ import (
 	"hash/adler32"
 
 	"github.com/eloonstra/go-little-drunken-bishop/pkg/drunkenbishop"
+	"github.com/goombaio/namegenerator"
 	"github.com/sean9999/go-delphi"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Peer struct {
-	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub" json:"pub"`
-	Properties *KV `msgpack:"props" json:"props" yaml:"yaml" json:"props"`
+	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub"`
+	Properties *KV `msgpack:"props" json:"props" yaml:"yaml"`
 }
+
+func (p Peer) Config() (string, map[string]string) {
+	k := p.Key.ToHex()
+	m := p.Properties.AsMap()
+	m["grip"] = p.Grip()
+	m["nick"] = p.Nickname()
+	return k, m
+}
+
+func NewPeer(b []byte) Peer {
+	k := delphi.KeyFromBytes(b)
+	props := NewKV()
+	p := Peer{k, props}
+	return p
+}
+
+// func (p *Peer) MarshalJSON() ([]byte, error) {
+// 	m := p.Properties.AsMap()
+// 	m["pub"] = p.Key.ToHex()
+// 	m["grip"] = p.Grip()
+// 	return json.Marshal(m)
+// }
+
+// func (p *Peer) UnmarshalJSON(b []byte) error {
+// 	var m map[string]string
+// 	err := json.Unmarshal(b, &m)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	pubhex, exists := m["pub"]
+// 	if !exists {
+// 		return errors.New("no pub key")
+// 	}
+// 	pubkey := delphi.KeyFromHex(pubhex)
+// 	delete(m, "pub")
+// 	p.Key = pubkey
+// 	p.Properties.Incorporate(m)
+// 	return nil
+// }
 
 func (p Peer) MarshalBinary() ([]byte, error) {
 	return msgpack.Marshal(p)
@@ -25,6 +65,13 @@ func (p Peer) UnmarshalBinary(b []byte) error {
 
 func (p Peer) Equal(q Peer) bool {
 	return p.Key.Equal(q.Key)
+}
+
+func (p Peer) Nickname() string {
+	seed := p.ToInt64()
+	nameGenerator := namegenerator.NewNameGenerator(seed)
+	name := nameGenerator.Generate()
+	return name
 }
 
 // a key grip is a string short enough to be recognizable by the human eye
