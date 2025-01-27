@@ -60,7 +60,7 @@ func (cmd *Exe) Add(ctx context.Context, env hermeti.Env, args []string) ([]stri
 		return args, wrap(err)
 	}
 
-	_, err = io.Copy(env.OutStream, me.Config)
+	_, err = io.Copy(env.OutStream, me.Export())
 	if is(err) {
 		return args, wrap(err)
 	}

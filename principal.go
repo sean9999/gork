@@ -8,25 +8,32 @@ import (
 	"io"
 
 	"github.com/sean9999/go-delphi"
-	stablemap "github.com/sean9999/go-stable-map"
 	"github.com/sean9999/pear"
 	"github.com/spf13/afero"
+	omap "github.com/wk8/go-ordered-map/v2"
 )
 
 // KV is a key-value store whose keys are ordered, offering deterministic serialization
-type KV = stablemap.StableMap[string, string]
+type KV = omap.OrderedMap[string, string]
 
 func NewKV() *KV {
-	return stablemap.New[string, string]()
+	return omap.New[string, string]()
 }
 
 // a Principal is a public/private key-pair with some properties, and knowlege of [Peer]s
 type Principal struct {
 	delphi.Principal `msgpack:"priv" json:"priv" yaml:"priv"`
-	Props            *KV                 `msgpack:"props" json:"props" yaml:"props"`
-	Peers            map[delphi.Key]Peer `msgpack:"peers" json:"peers" yaml:"peers"`
-	randomness       io.Reader           `msgpack:"-" json:"-" yaml:"-"`
-	Config           *Config             `msgpack:"-" json:"-" yaml:"-"`
+	Props            *KV       `msgpack:"props" json:"props" yaml:"props"`
+	Peers            PeerList  `msgpack:"peers" json:"peers" yaml:"peers"`
+	randomness       io.Reader `msgpack:"-" json:"-" yaml:"-"`
+	Config           *Config   `msgpack:"-" json:"-" yaml:"-"`
+}
+
+func (p Principal) Export() *Config {
+	p.Config.Pub = p.PublicKey()
+	p.Config.Props = p.Props
+	p.Config.Peers = &p.Peers
+	return p.Config
 }
 
 func (g *Principal) ensureConfig() {
@@ -36,10 +43,8 @@ func (g *Principal) ensureConfig() {
 	}
 
 	g.Config.Pub = g.PublicKey()
-	g.Config.Props = g.Props.Clone()
-	for pubkey, peer := range g.Peers {
-		g.Config.Peers[pubkey] = peer.Properties
-	}
+	g.Config.Props = g.Props
+	g.Config.Peers = &g.Peers
 
 }
 
@@ -103,38 +108,43 @@ func (g *Principal) Art() string {
 // 	return g.Principal.Decrypt(msg *delphi.Message, opts crypto.DecrypterOpts)
 // }
 
+// func mapToPairs[K comparable, V any](m map[K]V) []omap.Pair[K, V] {
+// 	pairs := make([]omap.Pair[K,V],0,len(m))
+
+// 	for k,v := range m {
+// 		pair := omap.Pair[K,V]{
+// 			Key: k,
+// 			Value: v,
+// 		}
+// 		//pair := omap.Pair[K,V]{k,v}
+// 	}
+
+// }
+
+func incorporate(omap *KV, m map[string]string) {
+	for k, v := range m {
+		omap.Set(k, v)
+	}
+}
+
 // NewPrincipal creates a new [Principal].
 func NewPrincipal(randy io.Reader, m map[string]string) Principal {
 	prince := delphi.NewPrincipal(randy)
-	peers := make(map[delphi.Key]Peer, 8) // 8 seems like a reasonable soft upper limit
+	peers := make(PeerList, 0)
 	sm := NewKV()
 	king := Principal{*prince, sm, peers, randy, NewConfig()}
 	err := king.ensureGrip()
 	if err != nil {
 		panic(err)
 	}
-	sm.Incorporate(m)
-
+	incorporate(sm, m)
 	return king
 }
 
 func (g *Principal) ensureGrip() error {
-
-	g.Props.Unshift("grip", g.AsPeer().Grip())
+	g.Props.Set("grip", g.AsPeer().Grip())
+	g.Props.MoveToFront("grip")
 	return nil
-
-	// i := g.Props.IndexOf("grip")
-	// if i == 0 {
-	// 	return nil
-	// }
-	// if i == -1 {
-	// 	if g.Props.Length() > 0 {
-	// 		return errors.New("grip does not exist, and there are other keys")
-	// 	}
-	// 	g.Props.Set("grip", g.AsPeer().Grip())
-	// 	return nil
-	// }
-	// return errors.New("grip exists but in the wrong position")
 }
 
 func (g *Principal) WithRand(randy io.Reader) {
@@ -169,9 +179,8 @@ func (g *Principal) SyncConfig() error {
 		return err
 	}
 	g.Config.Pub = g.PublicKey()
-	for key, peer := range g.Peers {
-		g.Config.Peers[key] = peer.Properties
-	}
+	g.Config.Peers = &g.Peers
+	g.Config.Props = g.Props
 	return nil
 }
 
@@ -180,12 +189,11 @@ func (g *Principal) LoadConfig() error {
 	if g.Config != nil {
 		return nil
 	}
-	//g.Config.Pub = g.PublicKey()
-	for key, props := range g.Config.Peers {
-		p := Peer{key, props}
-		g.Peers[key] = p
-	}
-	g.Props.Import(g.Config.Props)
+
+	//	TODO: we could verify that pubkeys match
+
+	g.Peers = *g.Config.Peers
+	g.Props = g.Config.Props
 	return nil
 }
 
@@ -205,12 +213,7 @@ func (g *Principal) Save(fd afero.File) error {
 
 	conf := g.Config
 	conf.Props = g.Props
-
-	for k, p := range g.Peers {
-		conf.Peers[k] = p.Properties
-	}
 	conf.Pub = g.PublicKey()
-
 	err := g.SignConfig()
 	if err != nil {
 		return err
@@ -246,15 +249,24 @@ func (g *Principal) Save(fd afero.File) error {
 
 // HasPeer returns true if the Principal has knowlege of that Peer
 func (g *Principal) HasPeer(p Peer) bool {
-	_, exists := g.Peers[p.Key]
-	return exists
+	for _, peer := range g.Peers {
+		if peer.Equal(p) {
+			return true
+		}
+	}
+	return false
 }
 
 var ErrPeerExists = pear.Defer("peer already exists")
 
 // DropPeer makes a Principal forget a Peer.
 func (g *Principal) DropPeer(p Peer) {
-	delete(g.Peers, p.Key)
+	for i, thisPeer := range g.Peers {
+		if thisPeer.Equal(p) {
+			g.Peers = append(g.Peers[:i+1], g.Peers[i:]...)
+			return
+		}
+	}
 }
 
 // AddPeer adds a Peer to a Principal's address book.
@@ -262,8 +274,7 @@ func (g *Principal) AddPeer(p Peer) error {
 	if g.HasPeer(p) {
 		return ErrPeerExists
 	}
-	g.Peers[p.Key] = p
-	g.SyncConfig()
+	g.Peers = append(g.Peers, p)
 	return nil
 }
 
@@ -271,15 +282,17 @@ func (g *Principal) AddPeer(p Peer) error {
 func (g *Principal) AsPeer() Peer {
 	g.SignConfig()
 	k := g.PublicKey()
-	//g.ensureGrip()
-	return Peer{k, g.Props.Clone()}
+	return Peer{k, g.Props}
 }
 
 // MarshalPEM marshals a Principal to PEM format
 func (g *Principal) MarshalPEM() ([]byte, error) {
-	headers := g.Props.AsMap()
-	//headers["grip"] = g.AsPeer().Grip()
-	headers["pubkey"] = base64.StdEncoding.EncodeToString(g.AsPeer().Bytes())
+	headers := make(map[string]string, g.Props.Len())
+	for pair := g.Props.Oldest(); pair != nil; pair = pair.Next() {
+		k, v := pair.Key, pair.Value
+		headers[k] = v
+	}
+	headers["pubkey"] = g.AsPeer().ToHex()
 
 	block := &pem.Block{
 		Type:    "ORACLE PRIVATE KEY",
@@ -308,13 +321,14 @@ func (g *Principal) UnmarshalPEM(b []byte) error {
 		return pear.Errorf("%w: %w", ErrBadHex, err)
 	}
 
-	sm := stablemap.From(block.Headers)
+	sm := NewKV()
+	incorporate(sm, block.Headers)
 
 	kp := delphi.KeyPair{}
 	kp[0] = delphi.Key{}.From(pub)
 	kp[1] = delphi.Key{}.From(privkey)
 	g.Principal = kp
-	g.Props = &sm
+	g.Props = sm
 	g.Props.Delete("grip") // this is derived
 	return nil
 }

@@ -1,6 +1,7 @@
 package gork
 
 import (
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"hash/adler32"
@@ -16,11 +17,43 @@ type Peer struct {
 	Properties *KV `msgpack:"props" json:"props" yaml:"yaml"`
 }
 
+type PeerList []Peer
+
+func (pl PeerList) MarshalJSON() ([]byte, error) {
+	m := map[string]*KV{}
+	for _, peer := range pl {
+		peer.Expand()
+		m[peer.ToHex()] = peer.Properties
+	}
+	return json.Marshal(m)
+}
+
+// Expand sets inferred properties
+func (p Peer) Expand() {
+	p.Properties.Set("nick", p.Nickname())
+	p.Properties.Set("grip", p.Grip())
+	p.Properties.MoveToFront("nick")
+	p.Properties.MoveToFront("grip")
+}
+
+// Contract deletes inferred keys
+func (p Peer) Contract() {
+	p.Properties.Delete("nick")
+	p.Properties.Delete("grip")
+}
+
+func asMap(kv *KV) map[string]string {
+	m := make(map[string]string, kv.Len())
+	for pair := kv.Oldest(); pair != nil; pair = pair.Next() {
+		m[pair.Key] = pair.Value
+	}
+	return m
+}
+
 func (p Peer) Config() (string, map[string]string) {
 	k := p.Key.ToHex()
-	m := p.Properties.AsMap()
-	m["grip"] = p.Grip()
-	m["nick"] = p.Nickname()
+	p.Expand()
+	m := asMap(p.Properties)
 	return k, m
 }
 
@@ -91,7 +124,9 @@ func (p Peer) Art() string {
 // MarshalPEM marshals a PEM to a Peer.
 func (p Peer) MarshalPEM() ([]byte, error) {
 
-	headers := p.Properties.AsMap()
+	p.Expand()
+	headers := asMap(p.Properties)
+
 	headers["grip"] = p.Grip()
 	block := &pem.Block{
 		Type:    "GORACLE PUBLIC KEY",

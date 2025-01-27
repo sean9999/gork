@@ -28,8 +28,6 @@ func TestAdd(t *testing.T) {
 	check.NoError(err)
 	result, err := io.ReadAll(outstream)
 	check.NoError(err)
-	check.Contains(string(result), "george")
-
-	check.True(true)
+	check.Contains(string(result), "98351ddf")
 
 }

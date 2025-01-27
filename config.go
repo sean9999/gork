@@ -23,11 +23,11 @@ var ErrNoPubKey = pear.Defer("no public key")
 // a Config is an object suitable for serializing and storing [Peer]s and key-value pairs
 type Config struct {
 	readBuf []byte
-	Pub     delphi.Key         `yaml:"pub" json:"pub" msgpack:"pub"`
-	Props   *KV                `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
-	Peers   map[delphi.Key]*KV `yaml:"peers,omitempty" json:"peers,omitempty" msgpack:"peers,omitempty"`
-	File    afero.File         `yaml:"-" json:"-" msgpack:"-"`
-	Verity  *Verity            `yaml:"ver" json:"ver" msgpack:"ver"`
+	Pub     delphi.Key `yaml:"pub" json:"pub" msgpack:"pub"`
+	Props   *KV        `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
+	Peers   *PeerList  `yaml:"peers,omitempty" json:"peers,omitempty" msgpack:"peers,omitempty"`
+	File    afero.File `yaml:"-" json:"-" msgpack:"-"`
+	Verity  *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
 }
 
 func (c *Config) ensureNonce(randy io.Reader) error {
@@ -125,7 +125,7 @@ func (c *Config) Digest() (digest []byte, err error) {
 	//	1 : props
 	//	3 : nonce
 
-	props, err := c.Props.MarshalBinary()
+	props, err := c.Props.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -247,10 +247,12 @@ func configToPeer(c Config) (*Peer, error) {
 }
 
 func NewConfig() *Config {
+
+	peerlist := make(PeerList, 0)
 	c := Config{
 		Pub:   delphi.Key{},
 		Props: NewKV(),
-		Peers: map[delphi.Key]*KV{},
+		Peers: &peerlist,
 	}
 	return &c
 }
