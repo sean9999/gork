@@ -53,6 +53,7 @@ func (c *Config) ensureNonce(randy io.Reader) error {
 // 	Verity *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
 // }
 
+// Verity is a struct that holds a signature plus some randomness that was involved in calculating the signature.
 type Verity struct {
 	Nonce     []byte `yaml:"nonce" json:"nonce" msgpack:"nonce"`
 	Signature []byte `yaml:"sig" json:"sig" msgpack:"sig"`

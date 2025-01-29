@@ -29,5 +29,6 @@ func TestAdd(t *testing.T) {
 	result, err := io.ReadAll(outstream)
 	check.NoError(err)
 	check.Contains(string(result), "98351ddf")
+	check.Contains(string(result), "shy-pine")
 
 }

@@ -14,13 +14,13 @@ import (
 func TestNewGork(t *testing.T) {
 
 	var randy = rand.Reader
-	alice := NewPrincipal(randy, nil)
+	alice := NewPrincipal(randy, nil, nil)
 	alice.Props.Set("hometown", "wonderland")
 	bob := NewPrincipal(randy, map[string]string{
 		"first_name": "bob",
 		"age":        "47",
-	})
-	eve := NewPrincipal(randy, nil)
+	}, nil)
+	eve := NewPrincipal(randy, nil, nil)
 	eve.Props.Set("lastName", "Macdonald")
 
 	body := []byte("hello, world.")
@@ -104,10 +104,12 @@ func TestNewGork(t *testing.T) {
 		assert.NoError(t, err)
 		alice.WithConfigFile(fd)
 
-		err = alice.SignConfig()
+		conf := alice.Export()
+
+		err = alice.SignConfig(conf)
 		assert.NoError(t, err)
 
-		err = alice.VerifyConfig()
+		err = alice.VerifyConfig(conf)
 		assert.NoError(t, err)
 
 	})

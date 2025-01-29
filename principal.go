@@ -26,38 +26,36 @@ type Principal struct {
 	Props            *KV       `msgpack:"props" json:"props" yaml:"props"`
 	Peers            PeerList  `msgpack:"peers" json:"peers" yaml:"peers"`
 	randomness       io.Reader `msgpack:"-" json:"-" yaml:"-"`
-	Config           *Config   `msgpack:"-" json:"-" yaml:"-"`
+	//Config           *Config   `msgpack:"-" json:"-" yaml:"-"`
+	ConfigFile io.ReadWriter `msgpack:"-" json:"-" yaml:"-"`
 }
 
-func (p Principal) Export() *Config {
-	p.Config.Pub = p.PublicKey()
-	p.Config.Props = p.Props
-	p.Config.Peers = &p.Peers
-	return p.Config
+// Hydrate fills a [Config] with information from a [Principal]
+func (c *Config) Hydrate(p *Principal) {
+	c.Pub = p.PublicKey()
+	c.Props = p.Props
+	c.Peers = &p.Peers
 }
 
-func (g *Principal) ensureConfig() {
-
-	if g.Config == nil {
-		g.Config = NewConfig()
-	}
-
-	g.Config.Pub = g.PublicKey()
-	g.Config.Props = g.Props
-	g.Config.Peers = &g.Peers
-
+// Export produces a *Config from a *Principal
+func (p *Principal) Export() *Config {
+	conf := NewConfig()
+	conf.Hydrate(p)
+	return conf
 }
 
-func (g *Principal) SignConfig() error {
-	g.ensureConfig()
+// SignConfig signs a config calculating a digest, adding a nonce, and producing a signature
+func (g *Principal) SignConfig(conf *Config) error {
 
-	err := g.Config.ensureNonce(g.randomness)
+	conf.Hydrate(g)
+
+	err := conf.ensureNonce(g.randomness)
 
 	if err != nil {
 		return err
 	}
 
-	digest, err := g.Config.Digest()
+	digest, err := conf.Digest()
 	if err != nil {
 		return err
 	}
@@ -67,18 +65,18 @@ func (g *Principal) SignConfig() error {
 		return err
 	}
 
-	g.Config.Verity.Signature = sig
+	conf.Verity.Signature = sig
 	return nil
 }
 
-func (g *Principal) VerifyConfig() error {
+func (g *Principal) VerifyConfig(c *Config) error {
 
 	pub := g.PublicKey()
-	dig, err := g.Config.Digest()
+	dig, err := c.Digest()
 	if err != nil {
 		return err
 	}
-	sig := g.Config.Verity.Signature
+	sig := c.Verity.Signature
 	ok := g.Principal.Verify(pub, dig, sig)
 	if !ok {
 		return errors.New("verification failed")
@@ -128,11 +126,11 @@ func incorporate(omap *KV, m map[string]string) {
 }
 
 // NewPrincipal creates a new [Principal].
-func NewPrincipal(randy io.Reader, m map[string]string) Principal {
+func NewPrincipal(randy io.Reader, m map[string]string, f afero.File) Principal {
 	prince := delphi.NewPrincipal(randy)
 	peers := make(PeerList, 0)
 	sm := NewKV()
-	king := Principal{*prince, sm, peers, randy, NewConfig()}
+	king := Principal{*prince, sm, peers, randy, f}
 	err := king.ensureGrip()
 	if err != nil {
 		panic(err)
@@ -153,6 +151,8 @@ func (g *Principal) WithRand(randy io.Reader) {
 
 func (g *Principal) WithConfigFile(fd afero.File) error {
 
+	g.ConfigFile = fd
+
 	conf := NewConfig()
 	b, err := io.ReadAll(fd)
 	if err != nil {
@@ -169,31 +169,16 @@ func (g *Principal) WithConfigFile(fd afero.File) error {
 		//return pear.New("could not do shitzz")
 	}
 	conf.File = fd
-	g.Config = conf
-	g.LoadConfig()
-	return nil
-}
-
-func (g *Principal) SyncConfig() error {
-	if err := g.LoadConfig(); err != nil {
-		return err
-	}
-	g.Config.Pub = g.PublicKey()
-	g.Config.Peers = &g.Peers
-	g.Config.Props = g.Props
+	g.LoadConfig(conf)
 	return nil
 }
 
 // load a config file and attach data to a [Principal]
-func (g *Principal) LoadConfig() error {
-	if g.Config != nil {
-		return nil
-	}
-
+func (g *Principal) LoadConfig(c *Config) error {
 	//	TODO: we could verify that pubkeys match
 
-	g.Peers = *g.Config.Peers
-	g.Props = g.Config.Props
+	g.Peers = *c.Peers
+	g.Props = c.Props
 	return nil
 }
 
@@ -204,17 +189,16 @@ func (g *Principal) Save(fd afero.File) error {
 		return pear.New("nil principal")
 	}
 
+	conf := g.Export()
+
 	if fd == nil {
-		fd = g.Config.File
+		fd = conf.File
 	}
 	if fd == nil {
 		return pear.New("no file specified or found")
 	}
 
-	conf := g.Config
-	conf.Props = g.Props
-	conf.Pub = g.PublicKey()
-	err := g.SignConfig()
+	err := g.SignConfig(conf)
 	if err != nil {
 		return err
 	}
@@ -280,7 +264,6 @@ func (g *Principal) AddPeer(p Peer) error {
 
 // AsPeer converts a Principal (public and private key) to a Peer (just public key)
 func (g *Principal) AsPeer() Peer {
-	g.SignConfig()
 	k := g.PublicKey()
 	return Peer{k, g.Props}
 }
@@ -293,6 +276,8 @@ func (g *Principal) MarshalPEM() ([]byte, error) {
 		headers[k] = v
 	}
 	headers["pubkey"] = g.AsPeer().ToHex()
+	headers["grip"] = g.AsPeer().Grip()
+	headers["nick"] = g.AsPeer().Nickname()
 
 	block := &pem.Block{
 		Type:    "ORACLE PRIVATE KEY",

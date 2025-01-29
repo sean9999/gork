@@ -136,7 +136,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 		return args, pear.Errorf("could not read pem file: %w", err)
 	}
 
-	p := gork.NewPrincipal(env.Randomness, nil)
+	p := gork.NewPrincipal(env.Randomness, nil, nil)
 
 	err = p.UnmarshalPEM(pemBytes)
 	if err != nil {

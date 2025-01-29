@@ -14,16 +14,9 @@ func (cmd *Exe) Info(ctx context.Context, env hermeti.Env, args []string) ([]str
 		return nil, err
 	}
 
-	for pair := cmd.Self.Props.Oldest(); pair != nil; pair = pair.Next() {
-		k := pair.Key
-		v := pair.Value
-		if k != "pubkey" {
-			fmt.Fprintf(env.OutStream, "%s:\t%s\n", k, v)
-		}
-	}
-
-	//fmt.Fprintf(env.OutStream, "grip:\t%s\n", cmd.Self.AsPeer().Grip())
-	fmt.Fprintf(env.OutStream, "pubkey:\t%x\n", cmd.Self.PublicKey().Bytes())
+	fmt.Fprintln(env.OutStream, cmd.Self.AsPeer().Nickname())
+	fmt.Fprintf(env.OutStream, "grip:\t%s\n", cmd.Self.AsPeer().Grip())
+	fmt.Fprintf(env.OutStream, "pubkey:\t%x\n\n", cmd.Self.PublicKey().Bytes())
 	fmt.Fprintf(env.OutStream, "%s\n", cmd.Self.Art())
 	return args, err
 }

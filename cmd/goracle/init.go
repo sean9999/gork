@@ -11,7 +11,7 @@ import (
 // gork init initializes a [gork.Principal]
 func (cmd *Exe) Init(ctx context.Context, env hermeti.Env, args []string) ([]string, error) {
 
-	p := gork.NewPrincipal(env.Randomness, nil)
+	p := gork.NewPrincipal(env.Randomness, nil, nil)
 
 	cmd.Self = &p
 

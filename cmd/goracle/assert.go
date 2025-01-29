@@ -20,20 +20,20 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 		return nil, pear.Errorf("%w: %w. Could not ensure self.", ErrAssert, err)
 	}
 
-	poo := struct {
-		msg   string
-		props *gork.KV
+	body := struct {
+		Msg   string   `json:"msg"`
+		Props *gork.KV `json:"props"`
 	}{
 		"i assert that I am me",
 		cmd.Self.Props,
 	}
 
-	msgBytes, jerr := json.Marshal(poo)
+	bodyBytes, jerr := json.Marshal(body)
 	if jerr != nil {
 		return nil, err
 	}
 
-	msg := delphi.NewMessage(env.Randomness, msgBytes)
+	msg := delphi.NewMessage(env.Randomness, bodyBytes)
 	msg.Sender = cmd.Self.PublicKey()
 	msg.Subject = "ASSERTION"
 
