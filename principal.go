@@ -1,10 +1,10 @@
 package gork
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/sean9999/go-delphi"
@@ -28,13 +28,6 @@ type Principal struct {
 	randomness       io.Reader `msgpack:"-" json:"-" yaml:"-"`
 	//Config           *Config   `msgpack:"-" json:"-" yaml:"-"`
 	ConfigFile io.ReadWriter `msgpack:"-" json:"-" yaml:"-"`
-}
-
-// Hydrate fills a [Config] with information from a [Principal]
-func (c *Config) Hydrate(p *Principal) {
-	c.Pub = p.PublicKey()
-	c.Props = p.Props
-	c.Peers = &p.Peers
 }
 
 // Export produces a *Config from a *Principal
@@ -247,7 +240,7 @@ var ErrPeerExists = pear.Defer("peer already exists")
 func (g *Principal) DropPeer(p Peer) {
 	for i, thisPeer := range g.Peers {
 		if thisPeer.Equal(p) {
-			g.Peers = append(g.Peers[:i+1], g.Peers[i:]...)
+			g.Peers = append(g.Peers[i+1:], g.Peers[:i]...)
 			return
 		}
 	}
@@ -270,51 +263,53 @@ func (g *Principal) AsPeer() Peer {
 
 // MarshalPEM marshals a Principal to PEM format
 func (g *Principal) MarshalPEM() ([]byte, error) {
-	headers := make(map[string]string, g.Props.Len())
-	for pair := g.Props.Oldest(); pair != nil; pair = pair.Next() {
-		k, v := pair.Key, pair.Value
-		headers[k] = v
-	}
-	headers["pubkey"] = g.AsPeer().ToHex()
+	// headers := make(map[string]string, g.Props.Len())
+	// for pair := g.Props.Oldest(); pair != nil; pair = pair.Next() {
+	// 	k, v := pair.Key, pair.Value
+	// 	headers[k] = v
+	// }
+
+	headers := make(map[string]string, 3)
+	//headers["pubkey"] = g.AsPeer().ToHex()
 	headers["grip"] = g.AsPeer().Grip()
 	headers["nick"] = g.AsPeer().Nickname()
 
 	block := &pem.Block{
 		Type:    "ORACLE PRIVATE KEY",
 		Headers: headers,
-		Bytes:   g.PrivateKey().Bytes(),
+		Bytes:   g.Bytes(),
 	}
 	return pem.EncodeToMemory(block), nil
 }
 
-var ErrBadPem = pear.Defer("malformed pem")
-var ErrBadHex = pear.Defer("bad hex")
+var ErrBadPem = errors.New("malformed pem")
+var ErrBadHex = errors.New("bad hex")
 
 // UnmarshalPEM converts a PEM to a Principal
 func (g *Principal) UnmarshalPEM(b []byte) error {
 	block, _ := pem.Decode(b)
 	if block == nil {
-		return pear.Errorf("could not decode pem. %w", ErrBadPem)
+		return fmt.Errorf("could not decode pem. %w", ErrBadPem)
 	}
 	privkey := block.Bytes
-	pub64, exists := block.Headers["pubkey"]
-	if !exists {
-		return ErrNoPubKey.Throw(1)
-	}
-	pub, err := base64.StdEncoding.DecodeString(pub64)
+	// pub64, exists := block.Headers["pubkey"]
+	// if !exists {
+	// 	return ErrNoPubKey.Throw(1)
+	// }
+	// pub, err := base64.StdEncoding.DecodeString(pub64)
+	// if err != nil {
+	// 	return pear.Errorf("%w: %w", ErrBadHex, err)
+	// }
+
+	// sm := NewKV()
+	// incorporate(sm, block.Headers)
+
+	prince, err := delphi.Principal{}.From(privkey)
 	if err != nil {
-		return pear.Errorf("%w: %w", ErrBadHex, err)
+		return fmt.Errorf("%w: %w", ErrBadPem, err)
 	}
-
-	sm := NewKV()
-	incorporate(sm, block.Headers)
-
-	kp := delphi.KeyPair{}
-	kp[0] = delphi.Key{}.From(pub)
-	kp[1] = delphi.Key{}.From(privkey)
-	g.Principal = kp
-	g.Props = sm
-	g.Props.Delete("grip") // this is derived
+	g.Principal = prince
+	g.Props = NewKV()
 	return nil
 }
 
@@ -332,6 +327,10 @@ func (g *Principal) FromBin(r io.Reader) error {
 		return err
 	}
 	return g.UnmarshalBinary(b)
+}
+
+func (g *Principal) ToBin() []byte {
+	return g.Principal.Bytes()
 }
 
 // PrincipalFrom assumes binary format, but maybe it should assume PEM

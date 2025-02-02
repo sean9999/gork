@@ -6,11 +6,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/pear"
 	"github.com/spf13/afero"
+)
+
+var (
+	DefaultDirectory = filepath.Join("~", ".gork")
 )
 
 // an OracleCLIError is an error with an exit code
@@ -74,6 +79,7 @@ func (exe *Exe) Run(env hermeti.Env) {
 		"save":   exe.Save,
 		"assert": exe.Assert,
 		"add":    exe.Add,
+		"export": exe.Export,
 	}
 
 	fn, exists := subcommands[subcmd]
@@ -122,7 +128,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	conf := new(string)
 	priv := new(string)
 	fset.StringVar(conf, "config", "~/.gork/config.json", "config file location")
-	fset.StringVar(priv, "priv", "_some_priv.pem", "private key location")
+	fset.StringVar(priv, "priv", "~/.gork/priv.pem", "private key location")
 	fset.Parse(args)
 
 	//	the lack of a well-formed pem file is fatal

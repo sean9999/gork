@@ -66,14 +66,14 @@ func TestNewGork(t *testing.T) {
 	t.Run("PEM encode / decode of principals", func(t *testing.T) {
 		p, err := alice.MarshalPEM()
 		assert.NoError(t, err)
-		var alice2 Principal
+		alice2 := new(Principal)
 		err = alice2.UnmarshalPEM(p)
 		assert.NoError(t, err)
 		assert.Equal(t, alice.PublicKey().Bytes(), alice2.PublicKey().Bytes())
 		assert.Equal(t, alice.PrivateKey().Bytes(), alice2.PrivateKey().Bytes())
 		eq := alice.PrivateKey().Equal(alice2.PrivateKey())
 		assert.True(t, eq)
-		var yuk Principal
+		yuk := new(Principal)
 		err = yuk.UnmarshalPEM([]byte("asdfasdfasdfasdfasdfasdfasdf"))
 		assert.ErrorIs(t, err, ErrBadPem)
 		emptyPem := pem.Block{
@@ -81,11 +81,11 @@ func TestNewGork(t *testing.T) {
 		}
 		b := pem.EncodeToMemory(&emptyPem)
 		err = yuk.UnmarshalPEM(b)
-		assert.ErrorIs(t, err, ErrNoPubKey)
+		assert.ErrorIs(t, err, delphi.ErrBadKey)
 		emptyPem.Headers["pubkey"] = "some invalid hex"
 		b = pem.EncodeToMemory(&emptyPem)
 		err = yuk.UnmarshalPEM(b)
-		assert.ErrorIs(t, err, ErrBadHex)
+		assert.ErrorIs(t, err, ErrBadPem)
 	})
 
 	t.Run("adding props and peers, exporting data", func(t *testing.T) {

@@ -1,27 +1,16 @@
 {
-	"pub": "5c2f587f8fa3f324412f1e033e2ecd8eb32d8e3f7703c38f5533eb11f7d9ad38583e7047ea1533d1b503e6fc40f4ea7bb7c5e5501fe442c311e60478776e464f",
-	"props": [
-		{
-			"pubkey": "XC9Yf4+j8yRBLx4DPi7NjrMtjj93A8OPVTPrEffZrThYPnBH6hUz0bUD5vxA9Op7t8XlUB/kQsMR5gR4d25GTw=="
-		},
-		{
-			"io.gork/version": "v0.0.1"
-		},
-		{
-			"grip": "969023d4"
-		},
-		{
-			"hometown": "wonderland"
-		},
-		{
-			"name": "Alice"
-		},
-		{
-			"narf": "fiddle"
+	"pub": "f2e7c991a5913b8ec9123b95c787cb74e04dfeda341655f9b20acdc2a9efb37b9d03779dd319ef5119cc45497c7be49d5acf3dbcfd52170104fbbc5bb3eaf509",
+	"props": {},
+	"peers": {
+		"15e2cf4163defbc157e3b43182b5469fdcc0a37bef8c112d24c69ecbc47d220efd42edbf8d6bcfa14411263bfc2f46a4d122904852ed13229a2951ea95005a06": {
+			"grip": "6ab41fc7",
+			"nick": "fragrant-frost",
+			"first_name": "bob",
+			"age": "47"
 		}
-	],
+	},
 	"ver": {
-		"nonce": "a1295c1946c1427e99c06cbb00764b58",
-		"sig": "2ac4c6ade7c1e1db2dd03f21a370cbcf29a3fb75ed4101788baa86ca4598132111672e69bc19104b1be2c7c0da2c2b809122b795f04c52cf1a95752891eb020b"
+		"nonce": "aa2c3c362f5c4e84a1b3c789d19f280a",
+		"sig": "5c0ab5068c99a9956fc7acf7c2aa4f257c15a165ac32c55b78cf185406f18e95e546009f185d23bd63a538e23f9064d2f1ceccbfee8a1aacc2ae1f45c4ddfa0f"
 	}
 }

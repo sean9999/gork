@@ -20,6 +20,9 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 		return nil, pear.Errorf("%w: %w. Could not ensure self.", ErrAssert, err)
 	}
 
+	//	by including props in the body
+	//	we can ensure the integrity of those too.
+	//	props are included has headers, but headers are not used in digest calculation
 	body := struct {
 		Msg   string   `json:"msg"`
 		Props *gork.KV `json:"props"`
@@ -37,9 +40,9 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 	msg.Sender = cmd.Self.PublicKey()
 	msg.Subject = "ASSERTION"
 
-	// for k, v := range cmd.Self.Props.Entries() {
-	// 	msg.Headers.Set(k, []byte(v))
-	// }
+	for pair := msg.Headers.Oldest(); pair != nil; pair = pair.Next() {
+		msg.Headers.Set(pair.Key, pair.Value)
+	}
 
 	err = msg.Sign(env.Randomness, cmd.Self)
 	if err != nil {

@@ -30,6 +30,13 @@ type Config struct {
 	Verity  *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
 }
 
+// Hydrate fills a [Config] with information from a [Principal]
+func (c *Config) Hydrate(p *Principal) {
+	c.Pub = p.PublicKey()
+	c.Props = p.Props
+	c.Peers = &p.Peers
+}
+
 func (c *Config) ensureNonce(randy io.Reader) error {
 
 	if randy == nil {

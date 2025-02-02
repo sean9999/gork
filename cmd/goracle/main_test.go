@@ -43,6 +43,7 @@ func SetupTestCLI(t testing.TB) *hermeti.CLI[*Exe] {
 			f, err := os.Open(filepath.Join(dir, e.Name()))
 			if err != nil {
 				t.Error(err)
+				continue
 			}
 			g, err := m.Create(filepath.Join(dir, e.Name()))
 			if err != nil {
@@ -55,6 +56,7 @@ func SetupTestCLI(t testing.TB) *hermeti.CLI[*Exe] {
 			if i == 0 {
 				t.Error("zero bytes written")
 			}
+			f.Close()
 		}
 	}
 	env.Filesystem = m

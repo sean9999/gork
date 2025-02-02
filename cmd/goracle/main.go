@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sean9999/hermeti"
+	"github.com/sean9999/pear"
 )
 
 func main() {
@@ -13,11 +14,11 @@ func main() {
 	ctx := context.Background()
 
 	//	capture panics in a pretty stack trace
-	// defer func() {
-	// 	if r := recover(); r != nil {
-	// 		pear.NicePanic(env.ErrStream)
-	// 	}
-	// }()
+	defer func() {
+		if r := recover(); r != nil {
+			pear.NicePanic(env.ErrStream)
+		}
+	}()
 
 	//	instatiate the object that represents our CLI
 	cmd := new(Exe)
