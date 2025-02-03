@@ -1,0 +1,14 @@
+{
+	"pub": "69aed8032d11beba220cc56b03ad782355fe38d0a61caca25132563ce2ad5c3833061d1d52c0f63daf5dc730e73c18a8e92476f17803be9c5ddcd14e917b7a87",
+	"props": {},
+	"peers": {
+		"e4e7cfb70470a569aa0450d708e524bdc1211b8a9fae219ea22f50f4b339c220be522655c322247ca73bfa3995d0d7f41628b4a95550d64d11e42e8a311803a8": {
+			"grip": "96c1e46",
+			"nick": "aged-smoke"
+		}
+	},
+	"ver": {
+		"nonce": "85c9b9eed4234f7b816d32da1105d6d5",
+		"sig": "ff1cdeb4f6329cfe2c4257bf34090a23a230760a593932bbe7054f7f22b680ff6868a7ed61390abcdcaa103075915aee8a3defff6d6ffc73494eb12cbb3aab0d"
+	}
+}

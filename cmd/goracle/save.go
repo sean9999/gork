@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/pear"
@@ -10,7 +11,7 @@ import (
 func (exe *Exe) Save(ctx context.Context, env hermeti.Env, args []string) ([]string, error) {
 	args, err := exe.ensureSelf(ctx, env, args)
 	if err != nil {
-		return nil, pear.Errorf("couldn't save: %w", err)
+		return nil, fmt.Errorf("couldn't save: %w", err)
 	}
 
 	err = exe.Self.Save(exe.ConfigFile)

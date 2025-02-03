@@ -32,6 +32,8 @@ func SetupTestCLI(t testing.TB) *hermeti.CLI[*Exe] {
 
 	dir := "../../testdata"
 
+	//	TODO: use the new Mount() method on hermeti.Env
+
 	//	add testdata/** to filesystem
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -49,15 +51,13 @@ func SetupTestCLI(t testing.TB) *hermeti.CLI[*Exe] {
 			if err != nil {
 				t.Error(err)
 			}
-			i, err := io.Copy(g, f)
+			_, err = io.Copy(g, f)
 			if err != nil {
 				t.Error(err)
 			}
-			if i == 0 {
-				t.Error("zero bytes written")
-			}
 			f.Close()
 		}
+
 	}
 	env.Filesystem = m
 

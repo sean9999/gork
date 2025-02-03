@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/sean9999/go-delphi"
@@ -15,7 +16,7 @@ import (
 var ErrAdd = pear.Defer("could not add peer")
 
 func wrap(e error) error {
-	return pear.Errorf("%w: %w", ErrAdd, e)
+	return fmt.Errorf("%w: %w", ErrAdd, e)
 }
 
 func is(e error) bool {

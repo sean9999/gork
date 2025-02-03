@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/sean9999/go-delphi"
@@ -11,7 +12,7 @@ import (
 	"github.com/sean9999/pear"
 )
 
-var ErrAssert = pear.Defer("could not assert")
+var ErrAssert = errors.New("could not assert")
 
 func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]string, error) {
 

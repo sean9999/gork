@@ -12,9 +12,29 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
+type Serde interface {
+	Serialize() []byte
+	Deserialize(b []byte) error
+}
+
+type IPeer interface {
+	Serde
+	Id() []byte
+	Key() delphi.Key
+	Equal(IPeer) bool
+}
+
 type Peer struct {
 	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub"`
 	Properties *KV `msgpack:"props" json:"props" yaml:"yaml"`
+}
+
+type IPeerList interface {
+	Serde
+	MarshalJSON() ([]byte, error)
+	Get(k delphi.Key) (Peer, bool)
+	Set(p Peer) bool
+	Len() int
 }
 
 type PeerList []Peer

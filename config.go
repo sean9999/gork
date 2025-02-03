@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/sean9999/go-delphi"
 	"github.com/sean9999/pear"
-	"github.com/spf13/afero"
 )
 
 var ErrNoPrivKey = pear.Defer("no private key")
@@ -26,8 +25,16 @@ type Config struct {
 	Pub     delphi.Key `yaml:"pub" json:"pub" msgpack:"pub"`
 	Props   *KV        `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
 	Peers   *PeerList  `yaml:"peers,omitempty" json:"peers,omitempty" msgpack:"peers,omitempty"`
-	File    afero.File `yaml:"-" json:"-" msgpack:"-"`
-	Verity  *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
+	//File    afero.File `yaml:"-" json:"-" msgpack:"-"`
+	Verity *Verity `yaml:"ver" json:"ver" msgpack:"ver"`
+}
+
+func (c Config) Verify(p Principal) (bool, error) {
+	dig, err := c.Digest()
+	if err != nil {
+		return false, err
+	}
+	return p.Verify(p.PublicKey(), dig, c.Verity.Signature), nil
 }
 
 // Hydrate fills a [Config] with information from a [Principal]
@@ -154,10 +161,10 @@ func (c *Config) Digest() (digest []byte, err error) {
 
 }
 
-func (c *Config) WithDescriptor(f afero.File) {
-	io.Copy(c, f)
-	c.File = f
-}
+// func (c *Config) WithDescriptor(f afero.File) {
+// 	io.Copy(c, f)
+// 	c.File = f
+// }
 
 // copy values from c to d
 // func (c *Config) cloneInto(d *Config) {
@@ -180,6 +187,7 @@ func (c *Config) Read(b []byte) (int, error) {
 		if err != nil {
 			return 0, err
 		}
+		buf = append(buf, []byte("\n")...)
 		c.readBuf = buf
 	}
 

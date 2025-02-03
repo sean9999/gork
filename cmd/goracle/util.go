@@ -151,7 +151,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	cmd.Self = &p
 
 	//	the lack of a config file is not an error
-	confFile, err := env.Filesystem.OpenFile(*conf, os.O_RDWR, 0644)
+	confFile, err := env.Filesystem.OpenFile(*conf, os.O_RDWR|os.O_CREATE, 0644)
 	if err == nil {
 		err = p.WithConfigFile(confFile)
 		if err != nil {

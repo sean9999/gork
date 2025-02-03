@@ -10,16 +10,23 @@ import (
 
 func TestAdd(t *testing.T) {
 
+	//	me
+	pem := "../../testdata/late-silence.pem"
+	conf := "../../testdata/late-silence.config.json"
+
+	//	person to add
+	assertion := "../../testdata/aged-smoke.assertion.pem"
+
 	check := assert.New(t)
 	cli := SetupTestCLI(t)
 
 	//	pipe assertion to stdin
-	fd, err := cli.Env.Filesystem.Open("../../testdata/george.assertion.pem")
+	fd, err := cli.Env.Filesystem.Open(assertion)
 	check.NoError(err)
 	io.Copy(cli.Env.InStream.(io.Writer), fd)
 
 	//	launch the CLI
-	cli.Env.Args = []string{"goracle", "add", "--priv", "../../testdata/john.pem", "--config", "../../testdata/john.config.json"}
+	cli.Env.Args = []string{"goracle", "add", "--priv", pem, "--config", conf}
 	ctx := context.TODO()
 	cli.Run(ctx)
 

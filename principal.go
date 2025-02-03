@@ -33,7 +33,8 @@ type Principal struct {
 // Export produces a *Config from a *Principal
 func (p *Principal) Export() *Config {
 	conf := NewConfig()
-	conf.Hydrate(p)
+	//conf.Hydrate(p)
+	p.SignConfig(conf)
 	return conf
 }
 
@@ -161,7 +162,7 @@ func (g *Principal) WithConfigFile(fd afero.File) error {
 		//return pear.Errorf("could not unmarshal config file. %w", err)
 		//return pear.New("could not do shitzz")
 	}
-	conf.File = fd
+	//conf.File = fd
 	g.LoadConfig(conf)
 	return nil
 }
@@ -178,15 +179,19 @@ func (g *Principal) LoadConfig(c *Config) error {
 // Save writes the Principal's Peers and custom properties to a config file
 func (g *Principal) Save(fd afero.File) error {
 
+	if fd == nil {
+		return pear.New("nil file")
+	}
+
 	if g == nil {
 		return pear.New("nil principal")
 	}
 
 	conf := g.Export()
 
-	if fd == nil {
-		fd = conf.File
-	}
+	// if fd == nil {
+	// 	fd = conf.File
+	// }
 	if fd == nil {
 		return pear.New("no file specified or found")
 	}
@@ -200,6 +205,9 @@ func (g *Principal) Save(fd afero.File) error {
 	if err != nil {
 		return err
 	}
+
+	//	add line break at end
+	confBytes = append(confBytes, []byte("\n")...)
 
 	err = fd.Truncate(0)
 	if err != nil {
