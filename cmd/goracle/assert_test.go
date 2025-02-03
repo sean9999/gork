@@ -15,7 +15,7 @@ func TestAssert(t *testing.T) {
 	check := assert.New(t)
 
 	cli := SetupTestCLI(t)
-	cli.Env.Args = []string{"goracle", "assert", "--priv", "../../testdata/george.pem"}
+	cli.Env.Args = []string{"goracle", "assert", "--priv", "../../testdata/young-dew.pem"}
 
 	ctx := context.TODO()
 	cli.Run(ctx)

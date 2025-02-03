@@ -35,7 +35,7 @@ func TestAdd(t *testing.T) {
 	check.NoError(err)
 	result, err := io.ReadAll(outstream)
 	check.NoError(err)
-	check.Contains(string(result), "98351ddf")
-	check.Contains(string(result), "shy-pine")
+	check.Contains(string(result), "96c1e46")
+	check.Contains(string(result), "aged-smoke")
 
 }

@@ -90,7 +90,7 @@ func TestNewGork(t *testing.T) {
 
 	t.Run("adding props and peers, exporting data", func(t *testing.T) {
 		alice.Props.Set("name", "Alice")
-		fd, err := afero.NewOsFs().OpenFile("testdata/george.config.json", os.O_RDWR, 0664)
+		fd, err := afero.NewOsFs().OpenFile("testdata/late-silence.config.json", os.O_RDWR, 0664)
 		assert.NoError(t, err)
 		alice.WithConfigFile(fd)
 		err = alice.AddPeer(bob.AsPeer())
@@ -100,18 +100,14 @@ func TestNewGork(t *testing.T) {
 	})
 
 	t.Run("validate signature", func(t *testing.T) {
-		fd, err := afero.NewOsFs().OpenFile("testdata/george.config.json", os.O_RDONLY, 0664)
+		fd, err := afero.NewOsFs().OpenFile("testdata/late-silence.config.json", os.O_RDONLY, 0664)
 		assert.NoError(t, err)
 		alice.WithConfigFile(fd)
-
 		conf := alice.Export()
-
 		err = alice.SignConfig(conf)
 		assert.NoError(t, err)
-
 		err = alice.VerifyConfig(conf)
 		assert.NoError(t, err)
-
 	})
 
 	// t.Run("The Beatles", func(t *testing.T) {
