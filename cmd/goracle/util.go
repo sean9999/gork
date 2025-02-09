@@ -6,23 +6,31 @@ import (
 	"os"
 )
 
-// an OracleCLIError is an error with an exit code
-type OracleCLIError struct {
+// an CLIError is an error with an exit code
+type CLIError struct {
 	Msg      string
 	ExitCode int
 	Child    error
 }
 
-func (orr *OracleCLIError) Error() string {
-	if orr.Child == nil {
-		return orr.Msg
+func (o *CLIError) Error() string {
+	if o.Child == nil {
+		return o.Msg
 	} else {
-		return fmt.Sprintf("%s: %s", orr.Msg, orr.Child)
+		return fmt.Sprintf("%s: %s", o.Msg, o.Child)
 	}
 }
 
+func (o *CLIError) Wrap(child error) {
+	o.Child = child
+}
+
+func (o *CLIError) Unrawp() error {
+	return o.Child
+}
+
 func complain(msg string, exitCode int, child error, stream io.Writer) {
-	err := &OracleCLIError{msg, exitCode, child}
+	err := &CLIError{msg, exitCode, child}
 	fmt.Fprintln(stream, err)
 	os.Exit(exitCode)
 }

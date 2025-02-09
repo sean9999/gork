@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "Gork",
+			"path": "."
+		},
+		{
+			"name": "Delphi",
+			"path": "../go-delphi"
+		},
+		{
+			"name": "Stable Map",
+			"path": "../go-stable-map"
+		},
+		{
+			"name": "Flargs",
+			"path": "../go-flargs"
+		}
+	],
+	"settings": {}
+}

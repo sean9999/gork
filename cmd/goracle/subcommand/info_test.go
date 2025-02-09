@@ -17,7 +17,7 @@ func TestInfo(t *testing.T) {
 	args := strings.Split(fmt.Sprintf("--config=%s info", "ringo.json"), " ")
 	env.Arguments = args
 
-	globals, remainingArgs, err := subcommand.ParseGlobals(env)
+	globals, remainingArgs, err := subcommand.ParseGlobals(env.Arguments)
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,7 +51,7 @@ func TestInfo_badConfig(t *testing.T) {
 		env := testingEnv(t)
 		env.Arguments = args
 
-		_, _, err := subcommand.ParseGlobals(env)
+		_, _, err := subcommand.ParseGlobals(env.Arguments)
 
 		if !errors.As(err, &fe) {
 			t.Error("it seems that this is not an FlargError")
@@ -65,7 +65,7 @@ func TestInfo_badConfig(t *testing.T) {
 		env := testingEnv(t)
 		env.Arguments = args
 
-		_, _, err := subcommand.ParseGlobals(env)
+		_, _, err := subcommand.ParseGlobals(env.Arguments)
 
 		if !errors.As(err, &fe) {
 			t.Error("it seems that this is not an FlargError")

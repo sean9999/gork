@@ -2,12 +2,11 @@ package subcommand_test
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"testing"
 
 	"github.com/sean9999/go-flargs"
-	realfs "github.com/sean9999/go-real-fs"
+	"github.com/spf13/afero"
 )
 
 var ringoTxt = []byte(`
@@ -26,7 +25,7 @@ func testingEnv(t *testing.T) *flargs.Environment {
 	t.Helper()
 
 	env := flargs.NewTestingEnvironment(randy)
-	tfs := realfs.NewTestFs()
+	tfs := afero.NewMemMapFs()
 	env.Filesystem = tfs
 
 	beatles := []string{"john", "paul", "george", "ringo"}
@@ -35,7 +34,8 @@ func testingEnv(t *testing.T) *flargs.Environment {
 		if err != nil {
 			t.Fatal(err)
 		}
-		tfs.WriteFile(fmt.Sprintf("%s.json", beatle), contents, fs.ModePerm)
+		fd, _ := tfs.Create(fmt.Sprintf("%s.json", beatle))
+		fd.Write(contents)
 	}
 	return env
 }

@@ -21,8 +21,10 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/spf13/afero v1.11.0 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

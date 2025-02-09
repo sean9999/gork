@@ -4,6 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/sean9999/go-flargs"
 	"github.com/sean9999/gork"
@@ -51,9 +53,14 @@ func Info(env *flargs.Environment, flargset *FlargSet) {
 		complain(errors.New("no private key"), 6)
 	}
 
-	pemBytes, err := env.Filesystem.ReadFile(priv.(string))
+	pemFile, err := env.Filesystem.OpenFile(priv.(string), os.O_RDONLY, 0644)
 	if err != nil {
 		complain(err, 9)
+	}
+
+	pemBytes, err := io.ReadAll(pemFile)
+	if err != nil {
+		complain(err, 11)
 	}
 
 	p := new(gork.Principal)
