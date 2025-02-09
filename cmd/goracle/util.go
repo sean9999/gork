@@ -42,7 +42,6 @@ func complain(msg string, exitCode int, child error, stream io.Writer) {
 // Exe is the execution of a command, including state
 type Exe struct {
 	Verbosity  uint
-	DieNow     bool
 	Self       *gork.Principal
 	ConfigFile afero.File
 }
@@ -101,16 +100,9 @@ func (cmd *Exe) bootstrap(_ context.Context, _ hermeti.Env, args []string) ([]st
 
 	gset := flag.NewFlagSet("global", flag.ContinueOnError)
 	verbosity := gset.Uint("verbosity", 0, "verbosity level")
-	dienow := gset.Bool("die", false, "should we just die?")
 	gset.Parse(args)
 
 	cmd.Verbosity = *verbosity
-	cmd.DieNow = *dienow
-
-	if *dienow {
-		return nil, pear.New("we must die now")
-	}
-
 	args = gset.Args()
 
 	return args, nil
