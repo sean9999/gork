@@ -31,8 +31,6 @@ github.com/sean9999/go-real-fs v0.1.0 h1:9kVAglWLso++OpCqLr/k3dR8A3YrN8jEIXL5j0+
 github.com/sean9999/go-real-fs v0.1.0/go.mod h1:0BlMZzzhH7gqL7W0KH4RDAWvbtEIoXskxKZTiPi7bx4=
 github.com/sean9999/go-stable-map v0.0.2 h1:CspA5jMVGZLqdW3C8Yz1tvLEt/ADNCOTewRMCGP7Czc=
 github.com/sean9999/go-stable-map v0.0.2/go.mod h1:9CVFsCwTsm1qlMzoqGDSOK7WSE59h/0CzfI7cL2Af3I=
-github.com/sean9999/hermeti v0.0.1 h1:Qfy1awTjNs+gTmi6Z19ulj8ix9mAMSd6aZy2r1crwQ4=
-github.com/sean9999/hermeti v0.0.1/go.mod h1:UT3LdZQhsyiwXNto3BykJXVQBJOkRZ/bgJK4oEKym9s=
 github.com/spf13/afero v1.11.0 h1:WJQKhtpdm3v2IzqG8VMqrr6Rf3UYpEF239Jy9wNepM8=
 github.com/spf13/afero v1.11.0/go.mod h1:GH9Y3pIexgf1MTIWtNGyogA5MwRIDXGUr+hbWNoBjkY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
