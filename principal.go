@@ -189,13 +189,6 @@ func (g *Principal) Save(fd afero.File) error {
 
 	conf := g.Export()
 
-	// if fd == nil {
-	// 	fd = conf.File
-	// }
-	if fd == nil {
-		return pear.New("no file specified or found")
-	}
-
 	err := g.SignConfig(conf)
 	if err != nil {
 		return err
