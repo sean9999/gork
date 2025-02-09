@@ -21,5 +21,14 @@
 			"path": "../pear"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#003300",
+			"titleBar.activeBackground": "#640479",
+			"statusBarItem.remoteBackground": "#003300",
+			"tab.activeBackground": "#00000066",
+			"statusBarItem.hoverBackground": "#5d02f9",
+			"titleBar.inactiveBackground": "#3ee8ac",
+		}
+	}
 }

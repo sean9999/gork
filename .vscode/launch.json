@@ -31,13 +31,14 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/goracled",
+            "cwd": "${workspaceFolder}",
             "args": [
                 "-priv", 
                 "testdata/late-silence.pem", 
                 "-config", 
                 "testdata/late-silence.config.json",
-                "port",
-                "9009"
+                "-port",
+                "7777"
             ]
         },
     ]

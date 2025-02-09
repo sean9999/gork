@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/sean9999/gork"
+	"github.com/sean9999/hermeti"
 	"github.com/spf13/afero"
 )
 
@@ -29,18 +31,21 @@ func setup(conf string) (state, error) {
 	return s, err
 }
 
-func initialize(filesystem afero.IOFS, args []string) (state, error) {
+func initialize(filesystem afero.Fs, env hermeti.Env) (state, error) {
 	s := state{}
-	port, confName, privName, err := flargs(args)
+	port, confName, privName, err := flargs(env.Args)
 	if err != nil {
 		return s, err
 	}
 	s.port = port
-	conf, err := filesystem.Open(confName)
+
+	conf, err := filesystem.OpenFile(confName, os.O_RDWR|os.O_TRUNC, 0640)
+
 	if err != nil {
 		return s, err
 	}
 	s.conf = conf
+	s.environment = env
 
 	priv, err := filesystem.Open(privName)
 	if err != nil {
@@ -49,6 +54,8 @@ func initialize(filesystem afero.IOFS, args []string) (state, error) {
 
 	p := new(gork.Principal)
 	err = p.FromPem(priv)
+	p.WithRand(env.Randomness)
+	p.WithConfigFile(conf)
 	s.self = p
 
 	return s, err

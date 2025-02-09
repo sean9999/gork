@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"net"
-	"os"
 
 	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
@@ -14,23 +12,27 @@ import (
 )
 
 type state struct {
-	conf fs.File
-	port uint
-	self *gork.Principal
+	conf        afero.File
+	port        uint
+	self        *gork.Principal
+	localAddr   net.Addr
+	environment hermeti.Env
 }
 
 func main() {
 
 	env := hermeti.RealEnv()
-	filesystem := afero.NewIOFS(afero.NewOsFs())
-	exe, err := initialize(filesystem, os.Args[1:])
-
+	env.Args = env.Args[1:]
+	filesystem := afero.NewOsFs()
+	exe, err := initialize(filesystem, env)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	fmt.Fprintln(env.OutStream, exe.self.AsPeer().Nickname())
-	io.Copy(env.OutStream, exe.self.Export())
+	me := exe.self
+
+	fmt.Fprintln(env.OutStream, me.Nickname())
+	io.Copy(env.OutStream, me.Export())
 
 	// listen to incoming udp packets
 	pc, err := net.ListenPacket("udp", fmt.Sprintf(":%d", exe.port))
@@ -39,25 +41,54 @@ func main() {
 	}
 	defer pc.Close()
 
+	exe.localAddr = pc.LocalAddr()
+
+	//exe.localAddr = pc.LocalAddr()
+
+	spool := NewSpool(pc)
+
 	for {
-		buf := make([]byte, 1024)
-		n, addr, err := pc.ReadFrom(buf)
-		if err != nil {
+		select {
+		case inEnv := <-spool.inbox:
+			//	do something with a well-formed message
+			go processEnvelope(exe, inEnv, spool.errors, spool.outbox)
+
+		case err := <-spool.errors:
 			fmt.Println("error", err)
-			continue
+		case outEnv := <-spool.outbox:
+			//spool.Send(outMsg, outMsg.ToPEM())
+			fmt.Println(outEnv)
 		}
-
-		fmt.Fprintf(env.OutStream, "n = %d, addr = %s\n", n, addr)
-
-		go serve(pc, addr, buf[:n])
 	}
+
+	// for {
+	// 	buf := make([]byte, 1024)
+	// 	n, addr, err := pc.ReadFrom(buf)
+	// 	if err != nil {
+	// 		fmt.Println("error", err)
+	// 		continue
+	// 	}
+
+	// 	fmt.Fprintf(env.OutStream, "n = %d, addr = %s\n", n, addr)
+
+	// 	go serve(pc, addr, buf[:n])
+	// }
 
 }
 
 func serve(pc net.PacketConn, addr net.Addr, buf []byte) {
-	// 0 - 1: ID
-	// 2: QR(1): Opcode(4)
-	buf[2] |= 0x80 // Set QR bit
-
 	pc.WriteTo(buf, addr)
+}
+
+// process an envelope and push messages to outbox and/or errs, if you want
+func processEnvelope(s state, e Envelope, errs chan error, outbox chan Envelope) {
+
+	switch e.Message.Subject {
+	case "ASSERTION":
+		processAssertion(s, e, errs, outbox)
+	default:
+		err := fmt.Errorf("unrecognized subject: %q", e.Message.Subject)
+		errs <- err
+	}
+
 }

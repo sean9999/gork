@@ -79,8 +79,13 @@ func (g *Principal) VerifyConfig(c *Config) error {
 }
 
 // Compose creates a message for a recipient. It's syntactic sugar for [delphi.NewMessage]
-func (g *Principal) Compose(body []byte, headers *KV, recipient Peer) *delphi.Message {
+func (g *Principal) Compose(body []byte, headers *delphi.KV, recipient Peer) *delphi.Message {
 	msg := delphi.NewMessage(g.randomness, body)
+	if headers != nil {
+		msg.Headers = headers
+	} else {
+		msg.Headers = NewKV()
+	}
 	msg.Recipient = recipient.Key
 	msg.Sender = g.PublicKey()
 	return msg
@@ -202,26 +207,31 @@ func (g *Principal) Save(fd afero.File) error {
 	//	add line break at end
 	confBytes = append(confBytes, []byte("\n")...)
 
-	err = fd.Truncate(0)
+	_, err = fd.Write(confBytes)
 	if err != nil {
 		return err
 	}
-	_, err = fd.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-	_, err = fd.WriteAt(confBytes, 0)
-	if err != nil {
-		return err
-	}
-	err = fd.Sync()
-	if err != nil {
-		return err
-	}
-	err = fd.Close()
-	if err != nil {
-		return err
-	}
+
+	// err = fd.Truncate(0)
+	// if err != nil {
+	// 	return err
+	// }
+	// _, err = fd.Seek(0, 0)
+	// if err != nil {
+	// 	return err
+	// }
+	// _, err = fd.WriteAt(confBytes, 0)
+	// if err != nil {
+	// 	return err
+	// }
+	// err = fd.Sync()
+	// if err != nil {
+	// 	return err
+	// }
+	// err = fd.Close()
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
@@ -254,6 +264,10 @@ func (g *Principal) AddPeer(p Peer) error {
 	}
 	g.Peers = append(g.Peers, p)
 	return nil
+}
+
+func (g *Principal) Nickname() string {
+	return g.AsPeer().Nickname()
 }
 
 // AsPeer converts a Principal (public and private key) to a Peer (just public key)
