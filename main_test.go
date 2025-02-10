@@ -109,20 +109,4 @@ func TestNewGork(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	// t.Run("The Beatles", func(t *testing.T) {
-
-	// 	priv, err := afero.NewOsFs().Open("testdata/george.pem")
-	// 	assert.NoError(t, err)
-
-	// 	george := new(Principal)
-	// 	err = george.FromPem(priv)
-	// 	assert.NoError(t, err)
-
-	// 	conf, err := afero.NewOsFs().OpenFile("testdata/george.config.json", os.O_RDWR, 0664)
-	// 	assert.NoError(t, err)
-
-	// 	george.WithDescriptor(conf)
-
-	// })
-
 }
