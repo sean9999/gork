@@ -89,7 +89,7 @@ func (cmd *Exe) Init(ctx context.Context, env hermeti.Env, args []string) ([]str
 		p = gork.NewPrincipal(env.Randomness, nil, prov)
 	}
 
-	cmd.Self = &p
+	cmd.Self = p
 
 	privPem, err := p.MarshalPEM()
 	if err != nil {

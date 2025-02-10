@@ -45,7 +45,7 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 		msg.Headers.Set(pair.Key, pair.Value)
 	}
 
-	err = msg.Sign(env.Randomness, cmd.Self)
+	err = msg.Sign(env.Randomness, &cmd.Self)
 	if err != nil {
 		return nil, pear.Errorf("%w: %w. Could not sign message", ErrAssert, err)
 	}

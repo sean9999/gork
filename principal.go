@@ -119,8 +119,10 @@ func (g *Principal) Art() string {
 // }
 
 func incorporate(omap *KV, m map[string]string) {
-	for k, v := range m {
-		omap.Set(k, v)
+	if m != nil {
+		for k, v := range m {
+			omap.Set(k, v)
+		}
 	}
 }
 
@@ -217,7 +219,9 @@ func (g *Principal) WithConfigProvider(prov ConfigProvider) error {
 func (g *Principal) LoadConfig(c *Config) error {
 	//	TODO: we could verify that pubkeys match
 
-	g.Peers = *c.Peers
+	if c.Peers != nil {
+		g.Peers = *c.Peers
+	}
 	g.Props = c.Props
 	return nil
 }
@@ -323,7 +327,9 @@ func (g *Principal) UnmarshalPEM(b []byte) error {
 		return fmt.Errorf("%w: %w", ErrBadPem, err)
 	}
 	g.Principal = prince
-	g.Props = NewKV()
+	if g.Props == nil {
+		g.Props = NewKV()
+	}
 	return nil
 }
 

@@ -49,7 +49,7 @@ func complain(msg string, exitCode int, child error, stream io.Writer) {
 // Exe is the execution of a command, including state
 type Exe struct {
 	Verbosity uint
-	Self      *gork.Principal
+	Self      gork.Principal
 	Config    gork.ConfigProvider
 }
 
@@ -86,6 +86,7 @@ func (exe *Exe) Run(env hermeti.Env) {
 		"assert": exe.Assert,
 		"add":    exe.Add,
 		"export": exe.Export,
+		"props":  exe.ClobberProps,
 	}
 
 	fn, exists := subcommands[subcmd]
@@ -119,7 +120,11 @@ func (cmd *Exe) bootstrap(_ context.Context, _ hermeti.Env, args []string) ([]st
 // ensureSelf ensures the presence of a gork.Principal by checking for --priv and optionally --config
 func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([]string, error) {
 
-	if cmd.Self != nil {
+	// if cmd.Self != nil {
+	// 	return args, nil
+	// }
+
+	if !cmd.Self.Principal.IsZero() {
 		return args, nil
 	}
 
@@ -147,7 +152,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	if err != nil {
 		return args, pear.Errorf("could not create principal: %w", err)
 	}
-	cmd.Self = &p
+	cmd.Self = p
 
 	//	the lack of a config file is not an error
 	prov := gork.FileBasedConfigProvider{
