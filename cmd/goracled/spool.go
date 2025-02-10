@@ -121,6 +121,7 @@ func processAssertion(exe state, inEnv Envelope, errs chan error, outbox chan En
 
 	//	let's send an ACK back
 	msg := me.Compose([]byte("I friended you."), nil, peer)
+	msg.Subject = "ORACLE MESSAGE"
 	msg.Headers.Set("you_can_contact_me_at", exe.localAddr.String())
 	msg.Sign(exe.environment.Randomness, me)
 

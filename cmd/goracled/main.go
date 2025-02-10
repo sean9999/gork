@@ -34,7 +34,7 @@ func main() {
 	fmt.Fprintln(env.OutStream, me.Nickname())
 	io.Copy(env.OutStream, me.Export())
 
-	// listen to incoming udp packets
+	// listen to incoming UDP packets
 	pc, err := net.ListenPacket("udp", fmt.Sprintf(":%d", exe.port))
 	if err != nil {
 		log.Fatal(err)
@@ -42,9 +42,6 @@ func main() {
 	defer pc.Close()
 
 	exe.localAddr = pc.LocalAddr()
-
-	//exe.localAddr = pc.LocalAddr()
-
 	spool := NewSpool(pc)
 
 	for {
@@ -60,19 +57,6 @@ func main() {
 			fmt.Println(outEnv)
 		}
 	}
-
-	// for {
-	// 	buf := make([]byte, 1024)
-	// 	n, addr, err := pc.ReadFrom(buf)
-	// 	if err != nil {
-	// 		fmt.Println("error", err)
-	// 		continue
-	// 	}
-
-	// 	fmt.Fprintf(env.OutStream, "n = %d, addr = %s\n", n, addr)
-
-	// 	go serve(pc, addr, buf[:n])
-	// }
 
 }
 
