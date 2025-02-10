@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/sean9999/go-delphi"
 	"github.com/sean9999/gork"
@@ -114,13 +113,8 @@ func processAssertion(exe state, inEnv Envelope, errs chan error, outbox chan En
 		errs <- err
 	}
 
-	conf.Close()
-	conf2, err := exe.environment.Filesystem.OpenFile(conf.Name(), os.O_RDWR|os.O_TRUNC, 0640)
-	if err != nil {
-		errs <- err
-	}
 	//	save to config
-	err = me.Save(conf2)
+	err = me.Save(conf)
 	if err != nil {
 		errs <- err
 	}

@@ -14,6 +14,11 @@ import (
 var ErrNoPrivKey = pear.Defer("no private key")
 var ErrNoPubKey = pear.Defer("no public key")
 
+type ConfigProvider interface {
+	Get() (*Config, error)
+	Set(*Config) error
+}
+
 // type propsAndVerity struct {
 // 	Props  KV     `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
 // 	Verity Verity `yaml:"ver" json:"ver" msgpack:"ver"`
@@ -25,8 +30,7 @@ type Config struct {
 	Pub     delphi.Key `yaml:"pub" json:"pub" msgpack:"pub"`
 	Props   *KV        `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
 	Peers   *PeerList  `yaml:"peers,omitempty" json:"peers,omitempty" msgpack:"peers,omitempty"`
-	//File    afero.File `yaml:"-" json:"-" msgpack:"-"`
-	Verity *Verity `yaml:"ver" json:"ver" msgpack:"ver"`
+	Verity  *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
 }
 
 func (c Config) Verify(p Principal) (bool, error) {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/sean9999/go-delphi"
 	"github.com/sean9999/pear"
@@ -23,11 +24,10 @@ func NewKV() *KV {
 // a Principal is a public/private key-pair with some properties, and knowlege of [Peer]s
 type Principal struct {
 	delphi.Principal `msgpack:"priv" json:"priv" yaml:"priv"`
-	Props            *KV       `msgpack:"props" json:"props" yaml:"props"`
-	Peers            PeerList  `msgpack:"peers" json:"peers" yaml:"peers"`
-	randomness       io.Reader `msgpack:"-" json:"-" yaml:"-"`
-	//Config           *Config   `msgpack:"-" json:"-" yaml:"-"`
-	ConfigFile io.ReadWriter `msgpack:"-" json:"-" yaml:"-"`
+	Props            *KV            `msgpack:"props" json:"props" yaml:"props"`
+	Peers            PeerList       `msgpack:"peers" json:"peers" yaml:"peers"`
+	randomness       io.Reader      `msgpack:"-" json:"-" yaml:"-"`
+	ConfigProvider   ConfigProvider `msgpack:"-" json:"-" yaml:"-"`
 }
 
 // Export produces a *Config from a *Principal
@@ -125,11 +125,11 @@ func incorporate(omap *KV, m map[string]string) {
 }
 
 // NewPrincipal creates a new [Principal].
-func NewPrincipal(randy io.Reader, m map[string]string, f afero.File) Principal {
+func NewPrincipal(randy io.Reader, m map[string]string, prov ConfigProvider) Principal {
 	prince := delphi.NewPrincipal(randy)
 	peers := make(PeerList, 0)
 	sm := NewKV()
-	king := Principal{*prince, sm, peers, randy, f}
+	king := Principal{*prince, sm, peers, randy, prov}
 	err := king.ensureGrip()
 	if err != nil {
 		panic(err)
@@ -148,28 +148,69 @@ func (g *Principal) WithRand(randy io.Reader) {
 	g.randomness = randy
 }
 
-func (g *Principal) WithConfigFile(fd afero.File) error {
+type FileBasedConfigProvider struct {
+	Fs   afero.Fs
+	Name string
+}
 
-	g.ConfigFile = fd
+func (f FileBasedConfigProvider) openForReading() (afero.File, error) {
+	return f.Fs.Open(f.Name)
+}
 
-	conf := NewConfig()
-	b, err := io.ReadAll(fd)
+func (f FileBasedConfigProvider) openForWriting() (afero.File, error) {
+	return f.Fs.OpenFile(f.Name, os.O_RDWR|os.O_TRUNC, 0640)
+}
+
+func (f FileBasedConfigProvider) Get() (*Config, error) {
+	fd, err := f.openForReading()
 	if err != nil {
-		return pear.Errorf("could not read config file. %w", err)
+		return nil, err
 	}
-	err = json.Unmarshal(b, conf)
+	defer fd.Close()
+	fileBytes, err := io.ReadAll(fd)
 	if err != nil {
-		//	if this is not JSON, truncate it
-		//fd.Truncate(0)
-
-		//	not an error
-
-		//return pear.Errorf("could not unmarshal config file. %w", err)
-		//return pear.New("could not do shitzz")
+		return nil, err
 	}
-	//conf.File = fd
-	g.LoadConfig(conf)
-	return nil
+	conf := new(Config)
+	err = json.Unmarshal(fileBytes, conf)
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
+}
+
+func (f FileBasedConfigProvider) Set(c *Config) error {
+	if c == nil {
+		return errors.New("nil config")
+	}
+	fd, err := f.openForWriting()
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(fd, c)
+	return err
+}
+
+func (g *Principal) WithConfigFile(filesytem afero.Fs, fileName string) error {
+	prov := FileBasedConfigProvider{
+		Fs:   filesytem,
+		Name: fileName,
+	}
+	g.ConfigProvider = prov
+	conf, err := prov.Get()
+	if err != nil {
+		return pear.Errorf("could not get config file. %w", err)
+	}
+	return g.LoadConfig(conf)
+}
+
+func (g *Principal) WithConfigProvider(prov ConfigProvider) error {
+	g.ConfigProvider = prov
+	conf, err := prov.Get()
+	if err != nil {
+		return pear.Errorf("could not get config file. %w", err)
+	}
+	return g.LoadConfig(conf)
 }
 
 // load a config file and attach data to a [Principal]
@@ -182,57 +223,15 @@ func (g *Principal) LoadConfig(c *Config) error {
 }
 
 // Save writes the Principal's Peers and custom properties to a config file
-func (g *Principal) Save(fd afero.File) error {
-
-	if fd == nil {
-		return pear.New("nil file")
+func (g *Principal) Save(prov ConfigProvider) error {
+	if prov == nil {
+		return pear.New("nil config provider")
 	}
-
 	if g == nil {
 		return pear.New("nil principal")
 	}
-
 	conf := g.Export()
-
-	err := g.SignConfig(conf)
-	if err != nil {
-		return err
-	}
-
-	confBytes, err := json.MarshalIndent(conf, "", "\t")
-	if err != nil {
-		return err
-	}
-
-	//	add line break at end
-	confBytes = append(confBytes, []byte("\n")...)
-
-	_, err = fd.Write(confBytes)
-	if err != nil {
-		return err
-	}
-
-	// err = fd.Truncate(0)
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = fd.Seek(0, 0)
-	// if err != nil {
-	// 	return err
-	// }
-	// _, err = fd.WriteAt(confBytes, 0)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = fd.Sync()
-	// if err != nil {
-	// 	return err
-	// }
-	// err = fd.Close()
-	// if err != nil {
-	// 	return err
-	// }
-	return nil
+	return prov.Set(conf)
 }
 
 // HasPeer returns true if the Principal has knowlege of that Peer

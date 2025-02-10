@@ -11,7 +11,6 @@ import (
 	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/pear"
-	"github.com/spf13/afero"
 )
 
 var (
@@ -49,9 +48,9 @@ func complain(msg string, exitCode int, child error, stream io.Writer) {
 
 // Exe is the execution of a command, including state
 type Exe struct {
-	Verbosity  uint
-	Self       *gork.Principal
-	ConfigFile afero.File
+	Verbosity uint
+	Self      *gork.Principal
+	Config    gork.ConfigProvider
 }
 
 func (e *Exe) State() *Exe {
@@ -151,13 +150,17 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	cmd.Self = &p
 
 	//	the lack of a config file is not an error
-	confFile, err := env.Filesystem.OpenFile(*conf, os.O_RDWR|os.O_CREATE, 0644)
+	prov := gork.FileBasedConfigProvider{
+		Fs:   env.Filesystem,
+		Name: *conf,
+	}
+	_, err = prov.Get()
 	if err == nil {
-		err = p.WithConfigFile(confFile)
+		err = p.WithConfigProvider(prov)
 		if err != nil {
 			return nil, err
 		}
-		cmd.ConfigFile = confFile
+		cmd.Config = prov
 	}
 
 	return fset.Args(), nil

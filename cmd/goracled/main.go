@@ -12,7 +12,7 @@ import (
 )
 
 type state struct {
-	conf        afero.File
+	conf        gork.ConfigProvider
 	port        uint
 	self        *gork.Principal
 	localAddr   net.Addr

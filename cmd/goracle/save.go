@@ -14,7 +14,7 @@ func (exe *Exe) Save(ctx context.Context, env hermeti.Env, args []string) ([]str
 		return nil, fmt.Errorf("couldn't save: %w", err)
 	}
 
-	err = exe.Self.Save(exe.ConfigFile)
+	err = exe.Self.Save(exe.Self.ConfigProvider)
 	if err != nil {
 		return nil, pear.Errorf("couldn't save: %w", err)
 	}

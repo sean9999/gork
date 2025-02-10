@@ -3,7 +3,6 @@ package gork
 import (
 	"crypto/rand"
 	"encoding/pem"
-	"os"
 	"testing"
 
 	"github.com/sean9999/go-delphi"
@@ -90,21 +89,21 @@ func TestNewGork(t *testing.T) {
 
 	t.Run("adding props and peers, exporting data", func(t *testing.T) {
 		alice.Props.Set("name", "Alice")
-		fd, err := afero.NewOsFs().OpenFile("testdata/late-silence.config.json", os.O_RDWR, 0664)
+		prov := FileBasedConfigProvider{
+			Fs:   afero.NewOsFs(),
+			Name: "testdata/late-silence.config.json",
+		}
+		alice.WithConfigProvider(prov)
+		err := alice.AddPeer(bob.AsPeer())
 		assert.NoError(t, err)
-		alice.WithConfigFile(fd)
-		err = alice.AddPeer(bob.AsPeer())
-		assert.NoError(t, err)
-		err = alice.Save(fd)
+		err = alice.Save(prov)
 		assert.NoError(t, err)
 	})
 
 	t.Run("validate signature", func(t *testing.T) {
-		fd, err := afero.NewOsFs().OpenFile("testdata/late-silence.config.json", os.O_RDONLY, 0664)
-		assert.NoError(t, err)
-		alice.WithConfigFile(fd)
+		alice.WithConfigFile(afero.NewOsFs(), "testdata/late-silence.config.json")
 		conf := alice.Export()
-		err = alice.SignConfig(conf)
+		err := alice.SignConfig(conf)
 		assert.NoError(t, err)
 		err = alice.VerifyConfig(conf)
 		assert.NoError(t, err)
