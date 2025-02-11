@@ -42,6 +42,13 @@ func main() {
 	defer pc.Close()
 
 	exe.localAddr = pc.LocalAddr()
+
+	exe.self.Props.Set("addr", pc.LocalAddr().String())
+	err = exe.self.Save(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	spool := NewSpool(pc)
 
 	for {

@@ -1,15 +1,11 @@
 {
 	"pub": "69aed8032d11beba220cc56b03ad782355fe38d0a61caca25132563ce2ad5c3833061d1d52c0f63daf5dc730e73c18a8e92476f17803be9c5ddcd14e917b7a87",
-	"props": {},
-	"peers": {
-		"e4e7cfb70470a569aa0450d708e524bdc1211b8a9fae219ea22f50f4b339c220be522655c322247ca73bfa3995d0d7f41628b4a95550d64d11e42e8a311803a8": {
-			"grip": "96c1e46",
-			"nick": "aged-smoke",
-			"addr": "[::1]:63856"
-		}
+	"props": {
+		"addr": "[::]:5656"
 	},
+	"peers": {},
 	"ver": {
-		"nonce": "d1d21f08567d45969d643e47c03a2519",
-		"sig": "592cf561eae931845797ce31e1d370a2f574a6c475b06f0d90d6470cbdb1ab1d39c63e27a6cbcadcd4e53e4c3d12ebf377a21da9c6796c017b81f79e7a335c05"
+		"nonce": "b0faaca0863442e1a25a455ffcd1b2a1",
+		"sig": "7be1d4c60942f26917f1bfa2e9f75a4121ad1887835ab80f0ede3f2ed6097c625abf038ed364ceac86779be20499e3b570f59e44f9da1fc19d7de9a538f67f0e"
 	}
 }

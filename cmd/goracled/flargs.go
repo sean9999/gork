@@ -34,10 +34,12 @@ func initialize(filesystem afero.Fs, env hermeti.Env) (state, error) {
 	if err != nil {
 		return s, err
 	}
+
 	p := new(gork.Principal)
 	err = p.FromPem(priv)
 	p.WithRand(env.Randomness)
 	p.WithConfigProvider(prov)
+	p.Props = gork.NewKV()
 	s.self = p
 	return s, err
 }

@@ -228,11 +228,13 @@ func (g *Principal) LoadConfig(c *Config) error {
 
 // Save writes the Principal's Peers and custom properties to a config file
 func (g *Principal) Save(prov ConfigProvider) error {
-	if prov == nil {
-		return pear.New("nil config provider")
-	}
 	if g == nil {
 		return pear.New("nil principal")
+	}
+	if prov == nil && g.ConfigProvider != nil {
+		prov = g.ConfigProvider
+	} else {
+		return pear.New("nil config provider")
 	}
 	conf := g.Export()
 	return prov.Set(conf)
