@@ -11,15 +11,7 @@ import (
 	"github.com/sean9999/go-delphi"
 	"github.com/sean9999/pear"
 	"github.com/spf13/afero"
-	omap "github.com/wk8/go-ordered-map/v2"
 )
-
-// KV is a key-value store whose keys are ordered, offering deterministic serialization
-type KV = omap.OrderedMap[string, string]
-
-func NewKV() *KV {
-	return omap.New[string, string]()
-}
 
 // a Principal is a public/private key-pair with some properties, and knowlege of [Peer]s
 type Principal struct {
@@ -33,7 +25,7 @@ type Principal struct {
 // Export produces a *Config from a *Principal
 func (p *Principal) Export() *Config {
 	conf := NewConfig()
-	//conf.Hydrate(p)
+	conf.Hydrate(p)
 	p.SignConfig(conf)
 	return conf
 }
@@ -142,7 +134,6 @@ func NewPrincipal(randy io.Reader, m map[string]string, prov ConfigProvider) Pri
 
 func (g *Principal) ensureGrip() error {
 	g.Props.Set("grip", g.AsPeer().Grip())
-	g.Props.MoveToFront("grip")
 	return nil
 }
 
@@ -173,7 +164,8 @@ func (f FileBasedConfigProvider) Get() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	conf := new(Config)
+	conf := NewConfig()
+
 	err = json.Unmarshal(fileBytes, conf)
 	if err != nil {
 		return nil, err
@@ -198,15 +190,15 @@ func (g *Principal) WithConfigFile(filesytem afero.Fs, fileName string) error {
 		Fs:   filesytem,
 		Name: fileName,
 	}
-	g.ConfigProvider = prov
-	conf, err := prov.Get()
-	if err != nil {
-		return pear.Errorf("could not get config file. %w", err)
-	}
-	return g.LoadConfig(conf)
+	return g.WithConfigProvider(&prov)
 }
 
 func (g *Principal) WithConfigProvider(prov ConfigProvider) error {
+
+	if g.ConfigProvider != nil {
+		return errors.New("config provider already exists")
+	}
+
 	g.ConfigProvider = prov
 	conf, err := prov.Get()
 	if err != nil {
@@ -233,7 +225,8 @@ func (g *Principal) Save(prov ConfigProvider) error {
 	}
 	if prov == nil && g.ConfigProvider != nil {
 		prov = g.ConfigProvider
-	} else {
+	}
+	if prov == nil {
 		return pear.New("nil config provider")
 	}
 	conf := g.Export()

@@ -48,12 +48,33 @@ func (pl PeerList) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
+func (pl *PeerList) UnmarshalJSON(b []byte) error {
+	peerlist := *pl
+	m := map[string]map[string]string{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return err
+	}
+	i := 0
+	for hexstr, props := range m {
+		p := new(Peer)
+		p.Properties = NewKV()
+		k := delphi.KeyFromHex(hexstr)
+		p.Key = k
+		for key, val := range props {
+			p.Properties.Set(key, val)
+		}
+		peerlist[i] = *p
+	}
+	return nil
+}
+
 // Expand sets inferred properties
 func (p Peer) Expand() {
 	p.Properties.Set("nick", p.Nickname())
 	p.Properties.Set("grip", p.Grip())
-	p.Properties.MoveToFront("nick")
-	p.Properties.MoveToFront("grip")
+	// p.Properties.MoveToFront("nick")
+	// p.Properties.MoveToFront("grip")
 }
 
 // Contract deletes inferred keys
@@ -62,18 +83,18 @@ func (p Peer) Contract() {
 	p.Properties.Delete("grip")
 }
 
-func asMap(kv *KV) map[string]string {
-	m := make(map[string]string, kv.Len())
-	for pair := kv.Oldest(); pair != nil; pair = pair.Next() {
-		m[pair.Key] = pair.Value
-	}
-	return m
-}
+// func asMap(kv *KV) map[string]string {
+// 	m := make(map[string]string, kv.Len())
+// 	for pair := kv.Oldest(); pair != nil; pair = pair.Next() {
+// 		m[pair.Key] = pair.Value
+// 	}
+// 	return m
+// }
 
 func (p Peer) Config() (string, map[string]string) {
 	k := p.Key.ToHex()
 	p.Expand()
-	m := asMap(p.Properties)
+	m := p.Properties.AsMap()
 	return k, m
 }
 
@@ -145,7 +166,7 @@ func (p Peer) Art() string {
 func (p Peer) MarshalPEM() ([]byte, error) {
 
 	p.Expand()
-	headers := asMap(p.Properties)
+	headers := p.Properties.AsMap()
 
 	headers["grip"] = p.Grip()
 	block := &pem.Block{

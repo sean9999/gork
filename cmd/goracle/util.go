@@ -117,7 +117,7 @@ func (cmd *Exe) bootstrap(_ context.Context, _ hermeti.Env, args []string) ([]st
 
 }
 
-// ensureSelf ensures the presence of a gork.Principal by checking for --priv and optionally --config
+// ensureSelf ensures the presence of a gork.Principal by checking for --priv and --config, finding and parsing them
 func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([]string, error) {
 
 	// if cmd.Self != nil {
@@ -152,7 +152,6 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	if err != nil {
 		return args, pear.Errorf("could not create principal: %w", err)
 	}
-	cmd.Self = p
 
 	//	the lack of a config file is not an error
 	prov := gork.FileBasedConfigProvider{
@@ -168,6 +167,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 		cmd.Config = prov
 	}
 
+	cmd.Self = p
 	return fset.Args(), nil
 
 }

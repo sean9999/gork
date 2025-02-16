@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/url"
+	"strconv"
 
 	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
@@ -34,6 +36,19 @@ func main() {
 	fmt.Fprintln(env.OutStream, me.Nickname())
 	io.Copy(env.OutStream, me.Export())
 
+	//	if not explicitely set, try to get local address from config
+	if addrStr, exists := exe.self.Props.Get("addr"); exists {
+		if exe.port == 0 {
+			addr, err := url.Parse(addrStr)
+			if err == nil {
+				p, err := strconv.Atoi(addr.Port())
+				if err == nil {
+					exe.port = uint(p)
+				}
+			}
+		}
+	}
+
 	// listen to incoming UDP packets
 	pc, err := net.ListenPacket("udp", fmt.Sprintf(":%d", exe.port))
 	if err != nil {
@@ -54,15 +69,23 @@ func main() {
 	for {
 		select {
 		case inEnv := <-spool.inbox:
+
+			greenmsg := fmt.Sprintf("%s%s%s", Green, inEnv.Message.Subject, Reset)
+			fmt.Fprintln(env.OutStream, greenmsg)
 			//	do something with a well-formed message
 			go processEnvelope(exe, inEnv, spool.errors, spool.outbox)
 
 		case err := <-spool.errors:
-			fmt.Println("error", err)
+			redmsg := fmt.Sprintf("%s%s%s", Red, err, Reset)
+			fmt.Fprintln(env.ErrStream, redmsg)
 		case outEnv := <-spool.outbox:
 			//spool.Send(outMsg, outMsg.ToPEM())
 			fmt.Println(outEnv)
+		case logmsg := <-spool.logs:
+			bluemsg := fmt.Sprintf("%s%s%s", Blue, logmsg, Reset)
+			fmt.Fprintln(env.OutStream, bluemsg)
 		}
+
 	}
 
 }

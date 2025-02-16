@@ -12,8 +12,13 @@ import (
 
 func TestNewGork(t *testing.T) {
 
+	prov := FileBasedConfigProvider{
+		Fs:   afero.NewOsFs(),
+		Name: "testdata/late-silence.config.json",
+	}
+
 	var randy = rand.Reader
-	alice := NewPrincipal(randy, nil, nil)
+	alice := NewPrincipal(randy, nil, prov)
 	alice.Props.Set("hometown", "wonderland")
 	bob := NewPrincipal(randy, map[string]string{
 		"first_name": "bob",
@@ -88,20 +93,20 @@ func TestNewGork(t *testing.T) {
 	})
 
 	t.Run("adding props and peers, exporting data", func(t *testing.T) {
-		alice.Props.Set("name", "Alice")
-		prov := FileBasedConfigProvider{
-			Fs:   afero.NewOsFs(),
-			Name: "testdata/late-silence.config.json",
-		}
-		alice.WithConfigProvider(prov)
-		err := alice.AddPeer(bob.AsPeer())
+		err := alice.Props.Set("name", "Alice")
+		assert.NoError(t, err)
+		err = alice.AddPeer(bob.AsPeer())
 		assert.NoError(t, err)
 		err = alice.Save(prov)
 		assert.NoError(t, err)
 	})
 
 	t.Run("validate signature", func(t *testing.T) {
-		alice.WithConfigFile(afero.NewOsFs(), "testdata/late-silence.config.json")
+		prov := FileBasedConfigProvider{
+			Fs:   afero.NewOsFs(),
+			Name: "testdata/late-silence.config.json",
+		}
+		alice.WithConfigProvider(&prov)
 		conf := alice.Export()
 		err := alice.SignConfig(conf)
 		assert.NoError(t, err)

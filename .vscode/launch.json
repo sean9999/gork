@@ -36,9 +36,7 @@
                 "-priv", 
                 "testdata/late-silence.pem", 
                 "-config", 
-                "testdata/late-silence.config.json",
-                "-port",
-                "7777"
+                "testdata/late-silence.config.json"
             ]
         },
     ]

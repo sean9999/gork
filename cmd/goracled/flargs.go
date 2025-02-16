@@ -10,7 +10,7 @@ import (
 
 func flargs(args []string) (port uint, conf string, priv string, err error) {
 	flagset := flag.NewFlagSet("flagset", flag.PanicOnError)
-	flagset.UintVar(&port, "port", 5656, "specify port")
+	flagset.UintVar(&port, "port", 0, "specify port")
 	flagset.StringVar(&conf, "config", "config.json", "config file")
 	flagset.StringVar(&priv, "priv", "key.pem", "private key")
 	err = flagset.Parse(args)
@@ -37,9 +37,15 @@ func initialize(filesystem afero.Fs, env hermeti.Env) (state, error) {
 
 	p := new(gork.Principal)
 	err = p.FromPem(priv)
-	p.WithRand(env.Randomness)
-	p.WithConfigProvider(prov)
+	if err != nil {
+		return s, err
+	}
 	p.Props = gork.NewKV()
+	p.WithRand(env.Randomness)
+	err = p.WithConfigProvider(prov)
+	if err != nil {
+		return s, err
+	}
 	s.self = p
 	return s, err
 }

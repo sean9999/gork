@@ -24,6 +24,7 @@ type spool struct {
 	inbox  chan Envelope
 	outbox chan Envelope
 	errors chan error
+	logs   chan string
 }
 
 func (s spool) Consume(b []byte) (*delphi.Message, error) {
@@ -56,8 +57,9 @@ func NewSpool(conn net.PacketConn) spool {
 	inbox := make(chan Envelope)
 	outbox := make(chan Envelope)
 	errs := make(chan error)
+	logs := make(chan string, 256)
 	s := spool{
-		conn, inbox, outbox, errs,
+		conn, inbox, outbox, errs, logs,
 	}
 
 	go func() {
@@ -82,6 +84,8 @@ func NewSpool(conn net.PacketConn) spool {
 				SenderAddress:    addr,
 				RecipientAddress: conn.LocalAddr(),
 			}
+			logmsg := fmt.Sprintf("got message %q from %q", msg.Subject, addr)
+			logs <- logmsg
 			inbox <- env
 		}
 	}()

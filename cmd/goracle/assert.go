@@ -29,7 +29,7 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 		Props *gork.KV `json:"props"`
 	}{
 		"i assert that I am me",
-		cmd.Self.Props,
+		cmd.Self.Props.Clone(),
 	}
 
 	bodyBytes, jerr := json.Marshal(body)
@@ -40,10 +40,6 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 	msg := delphi.NewMessage(env.Randomness, bodyBytes)
 	msg.Sender = cmd.Self.PublicKey()
 	msg.Subject = "ASSERTION"
-
-	for pair := msg.Headers.Oldest(); pair != nil; pair = pair.Next() {
-		msg.Headers.Set(pair.Key, pair.Value)
-	}
 
 	err = msg.Sign(env.Randomness, &cmd.Self)
 	if err != nil {
