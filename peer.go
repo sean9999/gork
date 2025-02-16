@@ -152,7 +152,6 @@ func (p Peer) Nickname() string {
 // and long enough to be reasonably unique
 func (p Peer) Grip() string {
 	s := adler32.Checksum(p.Bytes())
-	//s := crc32.Checksum(p.Bytes(), crc32.IEEETable)
 	return fmt.Sprintf("%x", s)
 }
 
