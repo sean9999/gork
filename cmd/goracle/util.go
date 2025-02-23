@@ -87,6 +87,7 @@ func (exe *Exe) Run(env hermeti.Env) {
 		"add":    exe.Add,
 		"export": exe.Export,
 		"props":  exe.ClobberProps,
+		"send":   exe.Send,
 	}
 
 	fn, exists := subcommands[subcmd]

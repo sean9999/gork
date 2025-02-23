@@ -28,6 +28,64 @@ type Config struct {
 	Verity  *Verity    `yaml:"ver" json:"ver" msgpack:"ver"`
 }
 
+// func (c *Config) MarshalJSON() ([]byte, error) {
+// 	type s struct {
+// 		Pub      string      `json:"pub"`
+// 		Props    *KV         `json:"props"`
+// 		PeersMap peerListMap `json:"peers"`
+// 		Verity   *Verity     `json:"verity"`
+// 	}
+// 	c2 := s{
+// 		Pub:      c.Pub.ToHex(),
+// 		Props:    c.Props,
+// 		PeersMap: c.Peers.ToMap(),
+// 		Verity:   c.Verity,
+// 	}
+// 	return json.Marshal(c2)
+// }
+
+// func (c *Config) UnmarshalJSON(b []byte) error {
+// 	type s struct {
+// 		Pub      string      `json:"pub"`
+// 		Props    *KV         `json:"props"`
+// 		PeersMap peerListMap `json:"peers"`
+// 		Verity   *Verity     `json:"verity"`
+// 	}
+// 	var konf s
+// 	err := json.Unmarshal(b, &konf)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	k := delphi.KeyFromHex(konf.Pub)
+// 	c.Pub = k
+// 	c.Props = konf.Props
+// 	c.Peers = konf.PeersMap.ToList()
+// 	c.Verity = konf.Verity
+// 	return nil
+// }
+
+// 	type kv [2]string
+// 	type jfile struct {
+// 		Pub      delphi.Key    `yaml:"pub" json:"pub" msgpack:"pub"`
+// 		Props    *KV           `yaml:"props,omitempty" json:"props,omitempty" msgpack:"props,omitempty"`
+// 		PeersMap map[string]kv `yaml:"peers,omitempty" json:"peers,omitempty" msgpack:"peers,omitempty"`
+// 		Verity   *Verity       `yaml:"ver" json:"ver" msgpack:"ver"`
+// 	}
+// 	var jconf jfile
+// 	err := json.Unmarshal(b, &jconf)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	c.Pub = jconf.Pub
+// 	c.Props = jconf.Props
+// 	c.Verity = jconf.Verity
+
+// 	for key, prop := range jconf.PeersMap {
+// 		p := delph
+// 	}
+
+// }
+
 func (c Config) Verify(p Principal) (bool, error) {
 	dig, err := c.Digest()
 	if err != nil {
@@ -39,7 +97,7 @@ func (c Config) Verify(p Principal) (bool, error) {
 // Hydrate fills a [Config] with information from a [Principal]
 func (c *Config) Hydrate(p *Principal) {
 	c.Pub = p.PublicKey()
-	c.Props = p.Props
+	c.Props = p.Props.Clone()
 	c.Peers = &p.Peers
 }
 
@@ -178,7 +236,7 @@ func (c *Config) Read(b []byte) (int, error) {
 func peerToConfig(p Peer) Config {
 	c := Config{
 		Pub:   p.Key,
-		Props: p.Properties.Clone(),
+		Props: p.Properties,
 	}
 	return c
 }

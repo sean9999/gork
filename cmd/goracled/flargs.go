@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/afero"
 )
 
-func flargs(args []string) (port uint, conf string, priv string, err error) {
+func flargs(args []string) (port uint64, conf string, priv string, err error) {
 	flagset := flag.NewFlagSet("flagset", flag.PanicOnError)
-	flagset.UintVar(&port, "port", 0, "specify port")
+	flagset.Uint64Var(&port, "port", 0, "specify port")
 	flagset.StringVar(&conf, "config", "config.json", "config file")
 	flagset.StringVar(&priv, "priv", "key.pem", "private key")
 	err = flagset.Parse(args)
@@ -23,7 +23,7 @@ func initialize(filesystem afero.Fs, env hermeti.Env) (state, error) {
 	if err != nil {
 		return s, err
 	}
-	s.port = port
+	s.port = uint16(port)
 	prov := gork.FileBasedConfigProvider{
 		Fs:   env.Filesystem,
 		Name: confName,
@@ -35,17 +35,18 @@ func initialize(filesystem afero.Fs, env hermeti.Env) (state, error) {
 		return s, err
 	}
 
-	p := new(gork.Principal)
+	p := gork.NewPrincipal(env.Randomness, nil, prov)
 	err = p.FromPem(priv)
 	if err != nil {
 		return s, err
 	}
-	p.Props = gork.NewKV()
-	p.WithRand(env.Randomness)
 	err = p.WithConfigProvider(prov)
+	// p.Props = gork.NewKV()
+	// p.WithRand(env.Randomness)
+	// err = p.WithConfigProvider(prov)
 	if err != nil {
 		return s, err
 	}
-	s.self = p
+	s.self = &p
 	return s, err
 }

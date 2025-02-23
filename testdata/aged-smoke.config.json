@@ -1,11 +1,18 @@
 {
 	"pub": "e4e7cfb70470a569aa0450d708e524bdc1211b8a9fae219ea22f50f4b339c220be522655c322247ca73bfa3995d0d7f41628b4a95550d64d11e42e8a311803a8",
-	"props": {
-		"addr": "[::]:54014"
-	},
+	"props": [
+		[
+			"grip",
+			"4b322149"
+		],
+		[
+			"addr",
+			"[::]:53858"
+		]
+	],
 	"peers": {},
 	"ver": {
-		"nonce": "df9dc06af67f4172805df22ea0b149ee",
-		"sig": "87eec84aec9c09bcaee80b4e48b6fb921fc6486e1bb64f66a30b156b8375cf5cb0db276616e1d362e1bd87a970da01cba37a57ddd200aaab0c9db8736025400c"
+		"nonce": "b65e39ceaa9e48c7af5d68d00e3254bc",
+		"sig": "55374695f9c737d67da2327291d87baa70d9bdb6edeb3aeb8c864217a588c6097281765f02c116d5b91257f78498d23188ec5b100b0ed0aa3c25f1e95052a108"
 	}
 }

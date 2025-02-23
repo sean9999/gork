@@ -3,8 +3,11 @@ package gork
 import (
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"hash/adler32"
+	"net"
+	"net/netip"
 
 	"github.com/eloonstra/go-little-drunken-bishop/pkg/drunkenbishop"
 	"github.com/goombaio/namegenerator"
@@ -39,34 +42,75 @@ type IPeerList interface {
 
 type PeerList []Peer
 
+func (list PeerList) ToMap() peerListMap {
+	mp := make(peerListMap, len(list))
+	for _, p := range list {
+		props := make([][2]string, 0, p.Properties.Length())
+		for k, v := range p.Properties.Entries() {
+			props = append(props, [2]string{k, v})
+		}
+		mp[p.ToHex()] = props
+	}
+	return mp
+}
+
+func (m peerListMap) ToList() *PeerList {
+	list := make(PeerList, 0, len(m))
+	for hexkey, props := range m {
+		p := NewPeer(delphi.KeyFromHex(hexkey).Bytes())
+		for _, prop := range props {
+			p.Properties.Set(prop[0], prop[1])
+		}
+		list = append(list, p)
+	}
+	return &list
+}
+
+// peerlist as it appears in a config
+type peerListMap map[string][][2]string
+
 func (pl PeerList) MarshalJSON() ([]byte, error) {
-	m := map[string]*KV{}
+	m := make(peerListMap, len(pl))
 	for _, peer := range pl {
 		peer.Expand()
-		m[peer.ToHex()] = peer.Properties
+		m[peer.Key.ToHex()] = [][2]string{}
+		for k, v := range peer.Properties.Entries() {
+			m[peer.Key.ToHex()] = append(m[peer.Key.ToHex()], [2]string{k, v})
+		}
 	}
 	return json.Marshal(m)
 }
 
-func (pl *PeerList) UnmarshalJSON(b []byte) error {
-	peerlist := *pl
-	m := map[string]map[string]string{}
-	err := json.Unmarshal(b, &m)
+func (peerListPointer *PeerList) UnmarshalJSON(b []byte) error {
+	pl := *peerListPointer
+	pm := peerListMap{}
+	err := json.Unmarshal(b, &pm)
 	if err != nil {
 		return err
 	}
-	i := 0
-	for hexstr, props := range m {
-		p := new(Peer)
-		p.Properties = NewKV()
-		k := delphi.KeyFromHex(hexstr)
-		p.Key = k
-		for key, val := range props {
-			p.Properties.Set(key, val)
+	for key, props := range pm {
+		p := NewPeer(delphi.KeyFromHex(key).Bytes())
+		for _, prop := range props {
+			p.Properties.Set(prop[0], prop[1])
 		}
-		peerlist[i] = *p
+		pl = append(pl, p)
 	}
 	return nil
+}
+
+func (p Peer) Address() (*net.UDPAddr, error) {
+
+	addrStr, exists := p.Properties.Get("addr")
+	if !exists {
+		return nil, errors.New("address not found")
+	}
+
+	ap, err := netip.ParseAddrPort(addrStr)
+	if err != nil {
+		return nil, err
+	}
+	sendAddr := net.UDPAddrFromAddrPort(ap)
+	return sendAddr, nil
 }
 
 // Expand sets inferred properties

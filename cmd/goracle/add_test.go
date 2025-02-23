@@ -30,6 +30,10 @@ func TestAdd(t *testing.T) {
 	ctx := context.TODO()
 	cli.Run(ctx)
 
+	// me := cli.Obj().Self
+	// err = me.Save(me.ConfigProvider)
+	// check.NoError(err)
+
 	//	capture output
 	outstream, err := cli.OutStream()
 	check.NoError(err)

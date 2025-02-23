@@ -129,6 +129,13 @@ func NewPrincipal(randy io.Reader, m map[string]string, prov ConfigProvider) Pri
 		panic(err)
 	}
 	incorporate(sm, m)
+	if prov != nil {
+		conf, err := prov.Get()
+		if err != nil {
+			panic(err)
+		}
+		king.LoadConfig(conf)
+	}
 	return king
 }
 
@@ -210,6 +217,10 @@ func (g *Principal) WithConfigProvider(prov ConfigProvider) error {
 // load a config file and attach data to a [Principal]
 func (g *Principal) LoadConfig(c *Config) error {
 	//	TODO: we could verify that pubkeys match
+
+	if c.Pub.IsZero() {
+		return errors.New("zero public key")
+	}
 
 	if c.Peers != nil {
 		g.Peers = *c.Peers

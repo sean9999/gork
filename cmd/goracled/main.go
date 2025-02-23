@@ -5,8 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/url"
-	"strconv"
+	"net/netip"
 
 	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
@@ -15,7 +14,7 @@ import (
 
 type state struct {
 	conf        gork.ConfigProvider
-	port        uint
+	port        uint16
 	self        *gork.Principal
 	localAddr   net.Addr
 	environment hermeti.Env
@@ -39,12 +38,22 @@ func main() {
 	//	if not explicitely set, try to get local address from config
 	if addrStr, exists := exe.self.Props.Get("addr"); exists {
 		if exe.port == 0 {
-			addr, err := url.Parse(addrStr)
+
+			//net.ResolveUDPAddr("udp6", addrStr)
+
+			addr, err := netip.ParseAddrPort(addrStr)
+
+			addr.Port()
+
+			//addr, err := url.Parse(addrStr)
 			if err == nil {
-				p, err := strconv.Atoi(addr.Port())
-				if err == nil {
-					exe.port = uint(p)
-				}
+
+				exe.port = addr.Port()
+
+				// p, err := strconv.Atoi(addr.Port())
+				// if err == nil {
+				// 	exe.port = uint(p)
+				// }
 			}
 		}
 	}
@@ -100,6 +109,8 @@ func processEnvelope(s state, e Envelope, errs chan error, outbox chan Envelope)
 	switch e.Message.Subject {
 	case "ASSERTION":
 		processAssertion(s, e, errs, outbox)
+	case "ALL BASE":
+		processAllBase(s, e, errs, outbox)
 	default:
 		err := fmt.Errorf("unrecognized subject: %q", e.Message.Subject)
 		errs <- err
