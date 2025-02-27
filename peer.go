@@ -1,13 +1,13 @@
 package gork
 
 import (
+	"crypto/sha512"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"hash/adler32"
-	"net"
-	"net/netip"
+	"maps"
 
 	"github.com/eloonstra/go-little-drunken-bishop/pkg/drunkenbishop"
 	"github.com/goombaio/namegenerator"
@@ -29,162 +29,142 @@ type IPeer interface {
 
 type Peer struct {
 	delphi.Key `msgpack:"pub" json:"pub" yaml:"pub"`
-	Properties *KV `msgpack:"props" json:"props" yaml:"yaml"`
+	Properties KV `msgpack:"props" json:"props" yaml:"yaml"`
 }
 
-type IPeerList interface {
-	Serde
-	MarshalJSON() ([]byte, error)
-	Get(k delphi.Key) (Peer, bool)
-	Set(p Peer) bool
-	Len() int
-}
-
-type PeerList []Peer
-
-func (list PeerList) ToMap() peerListMap {
-	mp := make(peerListMap, len(list))
-	for _, p := range list {
-		props := make([][2]string, 0, p.Properties.Length())
-		for k, v := range p.Properties.Entries() {
-			props = append(props, [2]string{k, v})
-		}
-		mp[p.ToHex()] = props
+func (p *Peer) MarshalJSON() ([]byte, error) {
+	if p == nil {
+		return nil, errors.New("nil peer")
 	}
-	return mp
+	obj := maps.Clone(p.Properties)
+	obj["pubkey"] = p.ToHex()
+	return json.MarshalIndent(obj, "", "\t")
 }
 
-func (m peerListMap) ToList() *PeerList {
-	list := make(PeerList, 0, len(m))
-	for hexkey, props := range m {
-		p := NewPeer(delphi.KeyFromHex(hexkey).Bytes())
-		for _, prop := range props {
-			p.Properties.Set(prop[0], prop[1])
-		}
-		list = append(list, p)
-	}
-	return &list
-}
-
-// peerlist as it appears in a config
-type peerListMap map[string][][2]string
-
-func (pl PeerList) MarshalJSON() ([]byte, error) {
-	m := make(peerListMap, len(pl))
-	for _, peer := range pl {
-		peer.Expand()
-		m[peer.Key.ToHex()] = [][2]string{}
-		for k, v := range peer.Properties.Entries() {
-			m[peer.Key.ToHex()] = append(m[peer.Key.ToHex()], [2]string{k, v})
-		}
-	}
-	return json.Marshal(m)
-}
-
-func (peerListPointer *PeerList) UnmarshalJSON(b []byte) error {
-	pl := *peerListPointer
-	pm := peerListMap{}
-	err := json.Unmarshal(b, &pm)
+func (p *Peer) UnmarshalJSON(b []byte) error {
+	var obj map[string]string
+	err := json.Unmarshal(b, obj)
 	if err != nil {
 		return err
 	}
-	for key, props := range pm {
-		p := NewPeer(delphi.KeyFromHex(key).Bytes())
-		for _, prop := range props {
-			p.Properties.Set(prop[0], prop[1])
+	for k, v := range obj {
+		switch k {
+		case "pubkey":
+			p.Key = delphi.KeyFromHex(v)
+		default:
+			p.Properties[k] = v
 		}
-		pl = append(pl, p)
 	}
 	return nil
 }
 
-func (p Peer) Address() (*net.UDPAddr, error) {
+func (p *Peer) Digest() []byte {
 
-	addrStr, exists := p.Properties.Get("addr")
-	if !exists {
-		return nil, errors.New("address not found")
+	//	pubkey
+	dig := make([]byte, 0)
+	dig = append(dig, p.Key.Bytes()...)
+
+	//	props without redundant derived keys
+	props := p.Properties.WithoutInferred()
+	for k, v := range props.LexicalOrder() {
+		dig = append(dig, []byte(k)...)
+		dig = append(dig, []byte(v)...)
 	}
 
-	ap, err := netip.ParseAddrPort(addrStr)
-	if err != nil {
-		return nil, err
-	}
-	sendAddr := net.UDPAddrFromAddrPort(ap)
-	return sendAddr, nil
+	//	hash it
+	return sha512.New().Sum(dig)
+
 }
 
-// Expand sets inferred properties
-func (p Peer) Expand() {
-	p.Properties.Set("nick", p.Nickname())
-	p.Properties.Set("grip", p.Grip())
-	// p.Properties.MoveToFront("nick")
-	// p.Properties.MoveToFront("grip")
-}
-
-// Contract deletes inferred keys
-func (p Peer) Contract() {
-	p.Properties.Delete("nick")
-	p.Properties.Delete("grip")
-}
-
-// func asMap(kv *KV) map[string]string {
-// 	m := make(map[string]string, kv.Len())
-// 	for pair := kv.Oldest(); pair != nil; pair = pair.Next() {
-// 		m[pair.Key] = pair.Value
-// 	}
-// 	return m
+// type IPeerList interface {
+// 	Serde
+// 	MarshalJSON() ([]byte, error)
+// 	Get(k delphi.Key) (Peer, bool)
+// 	Set(p Peer) bool
+// 	Len() int
 // }
 
-func (p Peer) Config() (string, map[string]string) {
-	k := p.Key.ToHex()
-	p.Expand()
-	m := p.Properties.AsMap()
-	return k, m
-}
+// type PeerList []Peer
+
+// func (list PeerList) ToMap() peerListMap {
+// 	mp := make(peerListMap, len(list))
+// 	for _, p := range list {
+// 		props := make([][2]string, 0, p.Properties.Length())
+// 		for k, v := range p.Properties.Entries() {
+// 			props = append(props, [2]string{k, v})
+// 		}
+// 		mp[p.ToHex()] = props
+// 	}
+// 	return mp
+// }
+
+// func (m peerListMap) ToList() *PeerList {
+// 	list := make(PeerList, 0, len(m))
+// 	for hexkey, props := range m {
+// 		p := NewPeer(delphi.KeyFromHex(hexkey).Bytes())
+// 		for _, prop := range props {
+// 			p.Properties.Set(prop[0], prop[1])
+// 		}
+// 		list = append(list, p)
+// 	}
+// 	return &list
+// }
+
+// // peerlist as it appears in a config
+// type peerListMap map[string][][2]string
+
+// func (pl PeerList) MarshalJSON() ([]byte, error) {
+// 	m := make(peerListMap, len(pl))
+// 	for _, peer := range pl {
+// 		peer.Expand()
+// 		m[peer.Key.ToHex()] = [][2]string{}
+// 		for k, v := range peer.Properties.Entries() {
+// 			m[peer.Key.ToHex()] = append(m[peer.Key.ToHex()], [2]string{k, v})
+// 		}
+// 	}
+// 	return json.Marshal(m)
+// }
+
+// func (peerListPointer *PeerList) UnmarshalJSON(b []byte) error {
+// 	pl := *peerListPointer
+// 	pm := peerListMap{}
+// 	err := json.Unmarshal(b, &pm)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	for key, props := range pm {
+// 		p := NewPeer(delphi.KeyFromHex(key).Bytes())
+// 		for _, prop := range props {
+// 			p.Properties.Set(prop[0], prop[1])
+// 		}
+// 		pl = append(pl, p)
+// 	}
+// 	return nil
+// }
 
 func NewPeer(b []byte) Peer {
 	k := delphi.KeyFromBytes(b)
-	props := NewKV()
+	props := make(KV)
 	p := Peer{k, props}
 	return p
 }
 
-// func (p *Peer) MarshalJSON() ([]byte, error) {
-// 	m := p.Properties.AsMap()
-// 	m["pub"] = p.Key.ToHex()
-// 	m["grip"] = p.Grip()
-// 	return json.Marshal(m)
-// }
-
-// func (p *Peer) UnmarshalJSON(b []byte) error {
-// 	var m map[string]string
-// 	err := json.Unmarshal(b, &m)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	pubhex, exists := m["pub"]
-// 	if !exists {
-// 		return errors.New("no pub key")
-// 	}
-// 	pubkey := delphi.KeyFromHex(pubhex)
-// 	delete(m, "pub")
-// 	p.Key = pubkey
-// 	p.Properties.Incorporate(m)
-// 	return nil
-// }
-
+// here we set our preferred binary serialization
 func (p Peer) MarshalBinary() ([]byte, error) {
 	return msgpack.Marshal(p)
 }
 
+// here we set our preferred binary de-serialization
 func (p Peer) UnmarshalBinary(b []byte) error {
 	return msgpack.Unmarshal(b, p)
 }
 
+// a Peer is equal to a Peer if its public key is the same
 func (p Peer) Equal(q Peer) bool {
 	return p.Key.Equal(q.Key)
 }
 
+// a Nickname is a very memorable string for humans only. Not to be used for actual uniqueness.
 func (p Peer) Nickname() string {
 	seed := p.ToInt64()
 	nameGenerator := namegenerator.NewNameGenerator(seed)
@@ -202,18 +182,14 @@ func (p Peer) Grip() string {
 // Art returns ASCII art for a Peer
 func (p Peer) Art() string {
 	title := fmt.Sprintf("ORACLE PEER %s", p.Grip())
-	return drunkenbishop.GenerateRandomArt(34, 18, p.Bytes(), true, title)
+	return drunkenbishop.GenerateRandomArt(32, 16, p.Bytes(), true, title)
 }
 
 // MarshalPEM marshals a PEM to a Peer.
 func (p Peer) MarshalPEM() ([]byte, error) {
-
-	p.Expand()
-	headers := p.Properties.AsMap()
-
-	headers["grip"] = p.Grip()
+	headers := p.Properties.WithInferred(p)
 	block := &pem.Block{
-		Type:    "GORACLE PUBLIC KEY",
+		Type:    "GORACLE PEER",
 		Headers: headers,
 		Bytes:   p.Bytes(),
 	}

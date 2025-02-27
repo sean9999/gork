@@ -13,8 +13,10 @@ func TestNewKV(t *testing.T) {
 	kv := NewKV()
 	assert.NotNil(kv)
 	//assert.Equal(kv.Len(), 0)
-	kv.Set("foo", "bar")
+	//kv.Set("foo", "bar")
+	kv["foo"] = "bar"
 	//assert.Equal(kv.Len(), 1)
+	assert.Len(kv, 1)
 }
 
 func TestNewPrincipal(t *testing.T) {
