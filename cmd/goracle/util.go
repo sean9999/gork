@@ -49,8 +49,8 @@ func complain(msg string, exitCode int, child error, stream io.Writer) {
 // Exe is the execution of a command, including state
 type Exe struct {
 	Verbosity uint
-	Self      gork.Principal
-	Config    gork.ConfigProvider
+	Self      *gork.Principal
+	Config    io.ReadWriteCloser
 }
 
 func (e *Exe) State() *Exe {
@@ -125,7 +125,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	// 	return args, nil
 	// }
 
-	if !cmd.Self.Principal.IsZero() {
+	if cmd.Self != nil {
 		return args, nil
 	}
 
@@ -147,7 +147,7 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 		return args, pear.Errorf("could not read pem file: %w", err)
 	}
 
-	p := gork.NewPrincipal(env.Randomness, nil, nil)
+	p := gork.ConstructPrincipal(gork.WithRand(env.Randomness))
 
 	err = p.UnmarshalPEM(pemBytes)
 	if err != nil {
@@ -155,18 +155,8 @@ func (cmd *Exe) ensureSelf(_ context.Context, env hermeti.Env, args []string) ([
 	}
 
 	//	the lack of a config file is not an error
-	prov := gork.FileBasedConfigProvider{
-		Fs:   env.Filesystem,
-		Name: *conf,
-	}
-	_, err = prov.Get()
-	if err == nil {
-		err = p.WithConfigProvider(prov)
-		if err != nil {
-			return nil, err
-		}
-		cmd.Config = prov
-	}
+	fd, _ := env.Filesystem.OpenFile(*conf, os.O_RDWR|os.O_TRUNC, 0640)
+	cmd.Config = fd
 
 	cmd.Self = p
 	return fset.Args(), nil

@@ -78,15 +78,13 @@ func (cmd *Exe) Init(ctx context.Context, env hermeti.Env, args []string) ([]str
 		return args, err
 	}
 
-	prov := gork.FileBasedConfigProvider{
-		Fs:   afero.NewOsFs(),
-		Name: "conf.json",
-	}
-	p := gork.Principal{}
+	var p *gork.Principal
 	if confOut == nil {
-		p = gork.NewPrincipal(env.Randomness, nil, nil)
+		//p = gork.NewPrincipal(env.Randomness, nil, nil)
+		p = gork.ConstructPrincipal(gork.WithRand(env.Randomness))
 	} else {
-		p = gork.NewPrincipal(env.Randomness, nil, prov)
+		p = gork.ConstructPrincipal(gork.WithRand(env.Randomness), gork.WithConfig(confOut))
+
 	}
 
 	cmd.Self = p

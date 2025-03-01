@@ -14,8 +14,14 @@ type Config struct {
 	Verity map[string]string `json:"ver,omitempty"`
 }
 
-func (p *Principal) Save(w io.WriteCloser) error {
-	defer w.Close()
+func (p *Principal) Save(w io.Writer) error {
+
+	defer func() {
+		if wc, ok := w.(io.Closer); ok {
+			wc.Close()
+		}
+	}()
+
 	conf := Config{
 		Pub:   p.PublicKey(),
 		Props: p.Props,
@@ -29,9 +35,14 @@ func (p *Principal) Save(w io.WriteCloser) error {
 	return err
 }
 
-func (p *Principal) Load(r io.ReadCloser) error {
+func (p *Principal) Load(r io.Reader) error {
 
-	defer r.Close()
+	defer func() {
+		if rc, ok := r.(io.Closer); ok {
+			rc.Close()
+		}
+	}()
+
 	confBytes, err := io.ReadAll(r)
 	if err != nil {
 		return err

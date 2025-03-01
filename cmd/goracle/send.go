@@ -39,7 +39,7 @@ func (exe *Exe) Send(ctx context.Context, env hermeti.Env, args []string) ([]str
 
 	msg.Sender = exe.Self.PublicKey()
 
-	msg.Sign(env.Randomness, &exe.Self)
+	msg.Sign(env.Randomness, exe.Self)
 
 	msgAsBytes, err := io.ReadAll(msg)
 	if err != nil {

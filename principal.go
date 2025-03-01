@@ -1,6 +1,7 @@
 package gork
 
 import (
+	"crypto/rand"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -58,21 +59,70 @@ func (g *Principal) Art() string {
 
 // }
 
-// NewPrincipal creates a new [Principal].
-func NewPrincipal(randy io.Reader, m map[string]string, prov io.ReadWriteCloser) *Principal {
-	prince := delphi.NewPrincipal(randy) // random private key
-	peers := make(PeerMap, 0)
-	props := NewKV()
-	king := &Principal{*prince, props, peers, randy}
+type option func(*Principal)
 
-	if prov != nil {
-		err := king.Load(prov)
+func WithRand(randy io.Reader) option {
+	return func(p *Principal) {
+		p.randomness = randy
+		p.Principal = *delphi.NewPrincipal(randy)
+	}
+}
+
+func WithProps(m map[string]string) option {
+	return func(p *Principal) {
+		p.Props = m
+	}
+}
+
+func WithConfig(r io.Reader) option {
+	return func(p *Principal) {
+		err := p.Load(r)
 		if err != nil {
 			panic(err)
 		}
+		// confBytes, err := io.ReadAll(r)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// conf := new(Config)
+		// err = json.Unmarshal(confBytes, conf)
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// p.Peers = conf.Peers
+		// maps.Copy(p.Props, conf.Props)
 	}
-	return king
 }
+
+func ConstructPrincipal(options ...option) *Principal {
+	p := &Principal{
+		Props:      make(KV),
+		Peers:      make(PeerMap),
+		randomness: rand.Reader,
+	}
+
+	for _, opt := range options {
+		opt(p)
+	}
+
+	return p
+}
+
+// NewPrincipal creates a new [Principal].
+// func NewPrincipal(randy io.Reader, m map[string]string, prov io.ReadWriteCloser) *Principal {
+// 	prince := delphi.NewPrincipal(randy) // random private key
+// 	peers := make(PeerMap, 0)
+// 	props := NewKV()
+// 	king := &Principal{*prince, props, peers, randy}
+
+// 	if prov != nil {
+// 		err := king.Load(prov)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 	}
+// 	return king
+// }
 
 func (g *Principal) WithRand(randy io.Reader) {
 	g.randomness = randy

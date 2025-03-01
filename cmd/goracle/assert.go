@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/sean9999/go-delphi"
-	"github.com/sean9999/gork"
 	"github.com/sean9999/hermeti"
 	"github.com/sean9999/pear"
 )
@@ -25,11 +24,11 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 	//	we can ensure the integrity of those too.
 	//	props are included has headers, but headers are not used in digest calculation
 	body := struct {
-		Msg   string   `json:"msg"`
-		Props *gork.KV `json:"props"`
+		Msg   string `json:"msg"`
+		Props []byte `json:"props"`
 	}{
 		"i assert that I am me",
-		cmd.Self.Props.Clone(),
+		cmd.Self.Props.Serialize(),
 	}
 
 	bodyBytes, jerr := json.Marshal(body)
@@ -41,7 +40,7 @@ func (cmd *Exe) Assert(ctx context.Context, env hermeti.Env, args []string) ([]s
 	msg.Sender = cmd.Self.PublicKey()
 	msg.Subject = "ASSERTION"
 
-	err = msg.Sign(env.Randomness, &cmd.Self)
+	err = msg.Sign(env.Randomness, cmd.Self)
 	if err != nil {
 		return nil, pear.Errorf("%w: %w. Could not sign message", ErrAssert, err)
 	}

@@ -1,6 +1,7 @@
 package gork
 
 import (
+	"encoding/json"
 	"iter"
 	"slices"
 )
@@ -39,4 +40,23 @@ func (kv KV) LexicalOrder() iter.Seq2[string, string] {
 			}
 		}
 	}
+}
+
+func (kv KV) Serialize() []byte {
+	rows := make([][2]string, 0, len(kv)*2)
+	for k, v := range kv.LexicalOrder() {
+		rows = append(rows, [2]string{k, v})
+	}
+	jbytes, _ := json.Marshal(rows)
+	return jbytes
+}
+
+func DeserializeKV(b []byte) KV {
+	var rows [][2]string
+	json.Unmarshal(b, rows)
+	kv := make(KV, len(rows)/2)
+	for _, row := range rows {
+		kv[row[0]] = row[1]
+	}
+	return kv
 }

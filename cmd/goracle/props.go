@@ -25,16 +25,10 @@ func (cmd *Exe) ClobberProps(ctx context.Context, env hermeti.Env, args []string
 			fmt.Fprintf(env.ErrStream, "this seems to be badly formed: %v", kv)
 			continue
 		}
-
-		props := cmd.Self.Props
-
-		x := *props
-
-		x.Set(kv[0], kv[1])
-
+		cmd.Self.Props[kv[0]] = kv[1]
 		fmt.Fprintln(env.OutStream, line)
 	}
-	cmd.Self.Save(cmd.Self.ConfigProvider)
+	cmd.Self.Save(cmd.Config)
 
 	if err := scanner.Err(); err != nil {
 		fmt.Fprintln(env.ErrStream, err)

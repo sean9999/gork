@@ -17,13 +17,12 @@ func TestClobberProps(t *testing.T) {
 	cli.Env.Args = []string{"goracle", "props", "--priv", "../../testdata/young-dew.pem", "--config", "../../testdata/young-dew.config.json"}
 	cli.Run(ctx)
 	self := cli.Obj().Self
-	confIn := self.Export()
-	err = self.LoadConfig(confIn)
+	err = self.Save(fd)
 	assert.NoError(t, err)
-	err = self.Save(nil)
+	err = self.Load(fd)
 	assert.NoError(t, err)
-	confOut := self.Export()
-	foo, ok := confOut.Props.Get("foo")
+	confOut := self.Props
+	foo, ok := confOut["foo"]
 	assert.Equal(t, "bar", foo)
 	assert.True(t, ok)
 

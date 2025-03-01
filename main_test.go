@@ -35,15 +35,19 @@ func readableConf(t testing.TB) afero.File {
 func TestNewGork(t *testing.T) {
 
 	var randy = rand.Reader
-	alice := NewPrincipal(randy, nil, readableConf(t))
+
+	alice := ConstructPrincipal(WithRand(randy), WithConfig(readableConf(t)))
 
 	alice.Props["hometown"] = "wonderland"
 
-	bob := NewPrincipal(randy, map[string]string{
+	bob := ConstructPrincipal(WithRand(randy), WithProps(map[string]string{
 		"first_name": "bob",
 		"age":        "47",
-	}, nil)
-	eve := NewPrincipal(randy, nil, nil)
+	}))
+
+	eve := ConstructPrincipal(WithRand(randy))
+
+	//eve := NewPrincipal(randy, nil, nil)
 	eve.Props["lastName"] = "Macdonald"
 
 	body := []byte("hello, world.")

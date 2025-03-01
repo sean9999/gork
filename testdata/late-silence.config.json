@@ -1,1 +1,14 @@
-{"pub":"2cb0d72454ffa2a6e294ddd065a8fdc6a782c665c270c41db50e30105af6963ac66d08751c4d6c5601e3d8684a2b72370ae16da55caa91e78d9e83461adde75b","props":{"grip":"c1da1cd7","hometown":"wonderland","name":"Alice"},"peers":{"9508fbb36a5cc5dfe025951f67ef728ff74ac84093040847aece4405e9fae55f76e209519d114ad1e9e47ff08ff6d56fb331e11fe725415986db93255d365a40":{}}}
+{
+	"pub": "9fe27015aacae8d8f14219aeada7267fae18ebb5f6dcd2c0d1d19cabfe4a115246becf2798be5cb5afac5ac61f578ab1578daa0a89f9050e98ce62aec3a4c7d6",
+	"props": {
+		"grip": "c1da1cd7",
+		"hometown": "wonderland",
+		"name": "Alice"
+	},
+	"peers": {
+		"cc1bb8b7bb8a2930e78d826ab0a4c16c8f0125f909e5e213f99fadfc279c1b5f7649c4ec56ccd5af57e6a8531344f47aab76da4d9cfd43e21cddb1bb45b32dc7": {
+			"age": "47",
+			"first_name": "bob"
+		}
+	}
+}
