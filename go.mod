@@ -6,7 +6,7 @@ require (
 	github.com/eloonstra/go-little-drunken-bishop v0.0.0-20220607134621-f5256283989f
 	github.com/google/uuid v1.6.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-	github.com/sean9999/go-delphi v0.1.0
+	github.com/sean9999/go-delphi v0.2.0
 	github.com/sean9999/hermeti v0.0.1
 	github.com/sean9999/pear v0.0.5
 	github.com/spf13/afero v1.12.0

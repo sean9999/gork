@@ -27,6 +27,8 @@ github.com/sean9999/fasthak v0.5.0 h1:aFzpNcQtWahuNYCdXNPDksqa2KJ1uMj0ocik/jFB+Z
 github.com/sean9999/fasthak v0.5.0/go.mod h1:f5kSXUshdVxAHyGlevXFswTySpxlEzHPNKBriWTGauI=
 github.com/sean9999/go-delphi v0.1.0 h1:zUAohi4HLSUyNq9WgkuMd+19QMDJ033EIJy2gPZjNHY=
 github.com/sean9999/go-delphi v0.1.0/go.mod h1:vd38v6C9sUccIlXGqabIU8IuqO5vS44HHY4PW+CBorQ=
+github.com/sean9999/go-delphi v0.2.0 h1:k3be6yam0WMRoMoHELtjVNL1TxHAGddwLdLQSuv3ciw=
+github.com/sean9999/go-delphi v0.2.0/go.mod h1:64ghfe0du1A+hcEFmx8OnCvWLyKsiprsMlujUZRXAaU=
 github.com/sean9999/go-fsnotify-recursively v0.1.3 h1:ab8Ka0sXWZpTEeDgoQ3ErBoPJVXlCIbfixX3qWT1/0Y=
 github.com/sean9999/go-fsnotify-recursively v0.1.3/go.mod h1:fudY2EUxLVjbm9DUs9Qe6JOBgWqe4uOcMGmuPEaEzSU=
 github.com/sean9999/go-stable-map v0.0.2 h1:CspA5jMVGZLqdW3C8Yz1tvLEt/ADNCOTewRMCGP7Czc=
